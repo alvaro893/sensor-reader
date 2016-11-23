@@ -2,6 +2,7 @@ from __future__ import division
 import SerialCommunication as serial
 import Analisys as analisys
 import logging as log
+import HttpConnection
 import PlotData as plot
 import Queue
 import numpy as np
@@ -38,9 +39,16 @@ def get_actual_temperature(raw_value, arr_max, arr_min):
     return temp
 
 
+def send_to_server(data):
+    t = threading.Thread(target=HttpConnection.post_frame(data))
+    t.start()
+
+
 def process_line(line):
     if len(line) < 70:
         return
+
+    send_to_server(line)
     #conver to bytes
     bytes_matrix = np.array([line[49:64],
                     line[33:48],
