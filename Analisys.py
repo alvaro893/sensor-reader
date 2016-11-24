@@ -47,7 +47,7 @@ class AsyncAnalysis(threading.Thread):
         if not self.queue.empty() :
             self.array = self.queue.get()
         else:
-            log.warning("empty queue, droping frame")
+            log.info("empty queue")
 
     def resize(self, img, interpolation):
         w = self.array.shape[1]

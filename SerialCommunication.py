@@ -42,7 +42,7 @@ def istart(process_line):
     ser.close()
 
 def start(process_line):
-    ser.write("*IDN?\n") # this solves the issue of not reading in linux
+    #ser.write("*IDN?\n") # this solves the issue of not reading in linux
     while True:
         data = ser.read_until(sequence)
         readHex(data)

@@ -1,10 +1,31 @@
 import requests, json
 import logging as log
+from threading import Thread
+from Queue import Queue
 
 #log.basicConfig(level=log.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
-#url = "http://ir-sensor-cloud.appspot.com/"
-key = "development_server'"
-url = "http://localhost:5000"
+url = "https://ir-sensor-cloud.appspot.com/"
+key = "development_server"
+#url = "http://localhost:5000"
+
+class NetworkThread(Thread):
+    def __init__(self):
+        Thread.__init__(self)
+        self.queue = Queue(50)
+        self.parameters = {}
+        self.daemon = True
+        self.start()
+
+    def add_to_queue(self, data):
+        self.queue.put(data, block=False)
+
+
+    def run(self):
+        while True:
+            data = self.queue.get(block=True)
+            self.parameters = post_buffer(data)
+
+
 
 
 def get_paremeters():
@@ -21,8 +42,8 @@ def post_n_people(n):
     return parameters
 
 
-def post_frame(data):
-    r = requests.post(url + '/video', data=data)
+def post_buffer(data):
+    r = requests.post(url + '/video/buffer', data=data, headers={'Content-Type': 'application/octet-stream'})
     log.debug("status:%s, headers:%s, url:%s", r.status_code, r.headers, r.url)
     parameters = r.json()
     return parameters

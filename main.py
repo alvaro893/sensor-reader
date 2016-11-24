@@ -16,7 +16,8 @@ x_length = 15
 y_length = 12
 sensor_pos = (4,0,8)
 arr_to_plot = np.zeros((y_length, x_length),dtype=np.uint8)
-#plot.set_plot(arr_to_plot)
+network_thread = HttpConnection.NetworkThread()
+buff = bytearray()
 
 # Start openCV in thread
 if serial.ser.is_open:
@@ -39,24 +40,26 @@ def get_actual_temperature(raw_value, arr_max, arr_min):
     return temp
 
 
-def send_to_server(data):
-    t = threading.Thread(target=HttpConnection.post_frame(data))
-    t.start()
 
 
-def process_line(line):
-    if len(line) < 70:
+def process_line(frame):
+    if len(frame) < 70:
         return
 
-    send_to_server(line)
-    #conver to bytes
-    bytes_matrix = np.array([line[49:64],
-                    line[33:48],
-                    line[17:32],
-                    line[1:16]])
-    sensor_number = line[0]  # from 1 to 3, must subtract 1 in x_coord
+    global buff
+    buff += frame
+    if(len(buff) > 2048):
+        network_thread.add_to_queue(buff)
+        buff = bytearray()
 
-    process_telemetry(np.array(line[65:]))
+    #conver to bytes
+    bytes_matrix = np.array([frame[49:64],
+                    frame[33:48],
+                    frame[17:32],
+                    frame[1:16]])
+    sensor_number = frame[0]  # from 1 to 3, must subtract 1 in x_coord
+
+    process_telemetry(np.array(frame[65:]))
     arr_max = bytes_matrix.max()
     arr_min = bytes_matrix.min()
 
