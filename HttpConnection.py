@@ -1,12 +1,12 @@
-import requests, json
+import requests
 import logging as log
+import Constants
 from threading import Thread
 from Queue import Queue
 
 #log.basicConfig(level=log.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
-url = "https://ir-sensor-cloud.appspot.com/"
-key = "development_server"
-#url = "http://localhost:5000"
+url = Constants.URL
+key = Constants.KEY
 
 class NetworkThread(Thread):
     def __init__(self):

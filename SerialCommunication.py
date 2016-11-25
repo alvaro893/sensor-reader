@@ -1,14 +1,15 @@
 import serial
 import re
 import os
+from Constants import *
 import logging as log
 __author__ = 'Alvaro'
 
-port = '/dev/ttyACM0'
-if os.name == 'nt':
-    port = 'COM4'
-sequence = b'\xff\xff\xff'
-ser = serial.Serial(port, 115200)
+port = PORT_LINUX
+if os.name == WINDOWS:
+    port = PORT_WINDOWS
+sequence = INITIAL_SEQUENCE
+ser = serial.Serial(port, BAUD_SPEED)
 pat = re.compile(sequence)
 
 
