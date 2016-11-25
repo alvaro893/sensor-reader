@@ -1,12 +1,15 @@
 import numpy as np, cv2, threading
 import logging as log
+from Queue import Queue
 __author__ = 'Alvaro'
 scale = 20
 class AsyncAnalysis(threading.Thread):
-    def __init__(self, array, queue):
+    def __init__(self, array):
         threading.Thread.__init__(self)
         self.array = array
-        self.queue = queue
+        self.queue = Queue(10)
+        self.daemon = True
+        self.start()
 
     def run(self):
         self.as_video()
@@ -49,6 +52,9 @@ class AsyncAnalysis(threading.Thread):
         else:
             log.info("empty queue")
 
+    def put_arr_in_queue(self, arr):
+        self.queue.put(arr)
+
     def resize(self, img, interpolation):
         w = self.array.shape[1]
         h = self.array.shape[0]
@@ -65,3 +71,4 @@ def createTrackBars(max_t, min_t):
     cv2.setTrackbarPos(trackbar0_name,window_name, max_t)
     cv2.setTrackbarPos(trackbar1_name,window_name, min_t)
     return window_name, trackbar0_name, trackbar1_name
+
