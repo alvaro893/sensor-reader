@@ -1,28 +1,37 @@
-import numpy as np, cv2, threading
-import logging as log
+import numpy as np, cv2
+import logging
+from threading import Thread
 from Queue import Queue
 __author__ = 'Alvaro'
-scale = 20
-class AsyncAnalysis(threading.Thread):
+
+scale = 30
+class AsyncAnalysis(Thread):
     def __init__(self, array):
-        threading.Thread.__init__(self)
+        Thread.__init__(self)
+        self.stopped = False
         self.array = array
         self.queue = Queue(10)
         self.daemon = True
-        self.start()
+        # self.start()
 
     def run(self):
         self.as_video()
 
+    def start(self):
+        Thread.start(self)
+
     def set_array(self, array):
         self.array = array
+
+    def stop(self):
+        self.stopped = True
 
     def as_video(self):
         print self.array
         min_t = 15
         max_t = 35
         window_name, trackbar_max, trackbar_min = createTrackBars(max_t, min_t)
-        while True:
+        while not self.stopped:
             self.get_arr_from_queue()
             if(self.array == None):
                 continue
@@ -52,7 +61,7 @@ class AsyncAnalysis(threading.Thread):
         if not self.queue.empty() :
             self.array = self.queue.get()
         else:
-            log.info("empty queue")
+            logging.info("empty queue")
 
     def put_arr_in_queue(self, arr):
         self.queue.put(arr)

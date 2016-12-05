@@ -12,10 +12,10 @@ class NetworkThread(Thread):
     def __init__(self):
         Thread.__init__(self)
         self.queue = Queue(50)
+        self.stopped = False
         self.parameters = {}
         self.buff = bytearray()
-        self.daemon = True
-        self.start()
+        # self.start()
 
     def add_to_queue(self, data):
         self.queue.put(data, block=False)
@@ -27,8 +27,15 @@ class NetworkThread(Thread):
             self.add_to_queue(self.buff)
             self.buff = bytearray()
 
+    def stop(self):
+        self.stopped = True
+
+    def start(self):
+        #self.daemon = True
+        Thread.start(self)
+
     def run(self):
-        while True:
+        while not self.stopped:
             data = self.queue.get(block=True)
             self.parameters = post_buffer(data)
 
