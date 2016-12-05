@@ -13,6 +13,7 @@ class NetworkThread(Thread):
         Thread.__init__(self)
         self.queue = Queue(50)
         self.parameters = {}
+        self.buff = bytearray()
         self.daemon = True
         self.start()
 
@@ -20,10 +21,17 @@ class NetworkThread(Thread):
         self.queue.put(data, block=False)
 
 
+    def add_to_buffer(self, raw_frame):
+        self.buff += raw_frame
+        if (len(self.buff) > 2048):
+            self.add_to_queue(self.buff)
+            self.buff = bytearray()
+
     def run(self):
         while True:
             data = self.queue.get(block=True)
             self.parameters = post_buffer(data)
+
 
 
 

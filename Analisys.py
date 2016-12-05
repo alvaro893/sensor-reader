@@ -24,6 +24,8 @@ class AsyncAnalysis(threading.Thread):
         window_name, trackbar_max, trackbar_min = createTrackBars(max_t, min_t)
         while True:
             self.get_arr_from_queue()
+            if(self.array == None):
+                continue
             # print "analysis tread", self.queue.qsize()
             # print self.array
             # create a color image using a color map and mapping range values
