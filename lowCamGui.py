@@ -33,6 +33,7 @@ class App:
         self.frame = Frame(master)
         self.frame.pack()
         master.title("sensor reader")
+        master.geometry("300x200")
 
         # create a pulldown menu, and add it to the menu bar
         self.menubar = Menu(master)
@@ -84,13 +85,14 @@ class App:
         processed_frame = lowCamera.process_frame(raw_frame)
         self.analysis_thread.put_arr_in_queue(processed_frame)
 
-        self.set_value(self.textMax, "Max temp", lowCamera.raw_max)
-        self.set_value(self.textMin, "Min temp", lowCamera.raw_min)
-        self.set_value(self.textMean, "mean temp", lowCamera.raw_mean)
+        amin, amax, amean = lowCamera.get_absolute_values()
+        self.set_value(self.textMax, "Max temp", amax)
+        self.set_value(self.textMin, "Min temp", amin)
+        self.set_value(self.textMean, "mean temp", amean)
 
 
     def set_value(self, text_var, value_name, value):
-        text_var.set(value_name + ": " + str(value))
+        text_var.set(value_name + ":        " + "{0:.2f}".format(value))
 
     def set_label(self, text):
         var_text = StringVar()
