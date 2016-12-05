@@ -40,7 +40,9 @@ class AsyncAnalysis(Thread):
             # create a color image using a color map and mapping range values
             max_t = cv2.getTrackbarPos(trackbar_max, window_name)
             min_t = cv2.getTrackbarPos(trackbar_min, window_name)
-            mapped = np.interp(self.array, [min_t, max_t], [0,255]).astype(np.uint8)
+
+            n = 10 # I add this to get a decimal more of precision. uint8 truncates the numbers
+            mapped = np.interp(self.array*n, [min_t*n, max_t*n], [0,255]).astype(np.uint8)
             img = cv2.applyColorMap(mapped, cv2.COLORMAP_JET)
 
             # open both of resized images (frames)

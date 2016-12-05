@@ -10,7 +10,7 @@ X_LENGTH = 15
 Y_LENGTH = 12
 SENSOR_POSITIONS = (4, 0, 8)
 
-frame_arr = np.zeros((Y_LENGTH, X_LENGTH), dtype=np.uint8)
+frame_arr = np.zeros((Y_LENGTH, X_LENGTH))
 
 def get_absolute_values():
     return min(raw_min), max(raw_max), np.mean(raw_mean)
@@ -39,7 +39,6 @@ def process_frame(raw_frame):
                              raw_frame[17:32],
                              raw_frame[1:16]])
     sensor_number = raw_frame[0] - 1 # sensors are numbered from 1 to 3, must subtract 1
-
     process_telemetry(np.array(raw_frame[65:]), sensor_number)
     arr_max = bytes_matrix.max()
     arr_min = bytes_matrix.min()
@@ -49,5 +48,4 @@ def process_frame(raw_frame):
         for i in range(0, X_LENGTH):
             temp = get_actual_temperature(bytes_matrix[j][i], arr_max, arr_min, sensor_number)
             frame_arr[y_coord][i] = temp
-
     return frame_arr
