@@ -12,7 +12,7 @@ class AsyncAnalysis(Thread):
         self.array = array
         self.queue = Queue(10)
         self.daemon = True
-        # self.start()
+        self.start()
 
     def run(self):
         self.as_video()

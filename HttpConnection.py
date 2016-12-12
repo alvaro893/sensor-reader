@@ -15,7 +15,7 @@ class NetworkThread(Thread):
         self.stopped = False
         self.parameters = {}
         self.buff = bytearray()
-        # self.start()
+        self.start()
 
     def add_to_queue(self, data):
         self.queue.put(data, block=False)

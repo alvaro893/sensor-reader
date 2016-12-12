@@ -16,7 +16,7 @@ class SerialCommunication(Thread):
         Thread.__init__(self)
         self.process_callback = process_callback
         self.ser = serial.Serial(port, BAUD_SPEED)
-
+        self.start()
         print("serial port:", port, " ", BAUD_SPEED, " ", os.name)
         # self.daemon = True
 

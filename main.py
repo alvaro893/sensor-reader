@@ -1,4 +1,4 @@
-import HighCameraGui
+import Gui
 import os
 import argparse
 import logging
@@ -34,7 +34,6 @@ def define_ports():
 def main():
     define_log_level()
     ports = define_ports()
-    HighCameraGui.start(ports[0])
-
+    Gui.start(ports[0])
 
 main()
