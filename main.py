@@ -33,7 +33,6 @@ def define_ports():
 
 def main():
     define_log_level()
-    ports = define_ports()
-    Gui.start(ports[0])
+    Gui.start()
 
 main()
