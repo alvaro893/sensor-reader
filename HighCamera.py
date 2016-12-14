@@ -17,36 +17,60 @@ FF FF FF <TELEMETRY> (38 Bytes)
 Where the 4th byte is the number of the row
 """
 Y_LENGTH = 240
-X_LENGTH = 80
-DISABLED = False
+X_LENGTH_8 = 80
+X_LENGTH_2 = 12
+DEFAULT_MODE = 8
 
 
 class HighCamera:
 
     def __init__(self, port):
-        self.frame_arr = np.zeros((Y_LENGTH, X_LENGTH), dtype=np.uint8)
+        self.frame_arr, self.bit_depth_mode = self.create_empty_matrix(mode=DEFAULT_MODE)
         try:
-            if (not DISABLED):
-                self.serial_thread = SerialCommunication(self.process_row, port)
+            self.serial_thread = SerialCommunication(self.process_row, port)
         except Exception as e:
             logging.error(e.message)
 
+        self.bit_depth(DEFAULT_MODE)
     def processData(self, data):
         print(data)
 
+    def create_empty_matrix(self, mode=8):
+        if mode == 8:
+            x_length = X_LENGTH_8
+        elif mode == 2:
+            x_length = X_LENGTH_2
+        else:
+            x_length = 0
+
+        bit_depth_mode = 0
+        if mode in {2, 8, 0}:
+            bit_depth_mode = mode
+
+        return np.zeros((Y_LENGTH, x_length), dtype=np.uint8), bit_depth_mode
+
+
     def process_row(self, row):
-        if row < X_LENGTH:
+        if row < X_LENGTH_8:
             return
 
         n_row = row[0]
-        if (n_row < Y_LENGTH):  # normal row
-            self.frame_arr[n_row] = np.array(row[1:X_LENGTH + 1])
+        if n_row < Y_LENGTH:  # normal row
+            try:
+                data_row = []
+                if self.bit_depth_mode == 8:
+                    data_row = row[1:X_LENGTH_8 + 1]
+                elif self.bit_depth_mode == 2:
+                    data_row = row[1:X_LENGTH_2 + 1]
+                self.frame_arr[n_row] = np.array(data_row)
+            except ValueError as e:
+                logging.warn("row size is not suitable: %s", e.message)
         else:  # telemetry row
             self.process_telemetry(row)
-            self.process_matrix()  # time to use the matrix after reading 240 rows
+            self.process_matrix()
 
     def process_matrix(self):
-        pass#print self.frame_arr[22]
+        print self.frame_arr
 
     def process_telemetry(self, data):
         #print len(data), ''.join('{:02x}'.format(x) for x in data)
@@ -66,7 +90,6 @@ class HighCamera:
         telemetry['bit_depth'] =              from_bytes_to_int( data[34] )
         telemetry['frame_delay'] =            from_bytes_to_int( data[36:38] )
 
-        print telemetry['frame_mean']
         # for k,v in telemetry.iteritems():
         #     print k, v
 
@@ -98,6 +121,8 @@ class HighCamera:
         self.send_command('a')
 
     def bit_depth(self, data):
+        self.frame_arr, self.bit_depth_mode = self.create_empty_matrix(mode=int(data))
+        logging.warn('mode was changed to %d bit depth', self.bit_depth_mode)
         self.send_command('B', data)
 
     def delay(self, data):
