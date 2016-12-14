@@ -1,7 +1,10 @@
 from __future__ import division
-import numpy as np
+
 import logging
+import numpy as np
+
 from SerialCommunication import SerialCommunication
+from Utils import int_to_bytes, from_bytes_to_int
 
 """
 Every image has 240 rows (19238 bytes) with the following format:
@@ -18,16 +21,10 @@ X_LENGTH = 80
 DISABLED = False
 
 
-def to_bytes(n):
-    s = '%x' % n
-    if len(s) & 1:
-        s = '0' + s
-    return s.decode('hex')
-
-
 class HighCamera:
+
     def __init__(self, port):
-        self.frame_arr = np.zeros((Y_LENGTH, X_LENGTH))
+        self.frame_arr = np.zeros((Y_LENGTH, X_LENGTH), dtype=np.uint8)
         try:
             if (not DISABLED):
                 self.serial_thread = SerialCommunication(self.process_row, port)
@@ -42,38 +39,42 @@ class HighCamera:
             return
 
         n_row = row[0]
-        if (n_row < Y_LENGTH):  # new frame
+        if (n_row < Y_LENGTH):  # normal row
             self.frame_arr[n_row] = np.array(row[1:X_LENGTH + 1])
-        else:  # next is telemetry
+        else:  # telemetry row
             self.process_telemetry(row)
             self.process_matrix()  # time to use the matrix after reading 240 rows
 
     def process_matrix(self):
-        print self.frame_arr
+        pass#print self.frame_arr[22]
 
     def process_telemetry(self, data):
-        print len(data), ''.join('{:02x}'.format(x) for x in data)
+        #print len(data), ''.join('{:02x}'.format(x) for x in data)
         if (len(data) < 40):
             return
-        # data.pop(0) # remove first element (it's just the frame number)
-        time_counter = data[1:3] + data[4:6]
-        frame_counter = data[6:7] + data[9:10]
-        frame_mean = data[12:13]
-        fpa_temp = data[15:16]
-        raw_max = data[18:19]
-        raw_min = data[21:22]
-        discard_packets_count = data[24:25]
-        raw_max_set = data[27:28]
-        raw_min_set = data[30:31]
-        agc = data[33]
-        bit_depth = data[34]
-        frame_delay = data[36:37]
+        telemetry = {}
+        telemetry['time_counter'] =           from_bytes_to_int( data[4:6] + data[1:3]) / 1000.0
+        telemetry['frame_counter'] =          from_bytes_to_int( data[10:12] + data[7:9] ) / 1000.0
+        telemetry['frame_mean'] =             from_bytes_to_int( data[13:15] ) / 1000.0
+        telemetry['fpa_temp'] =               from_bytes_to_int( data[16:18] )
+        telemetry['raw_max'] =                from_bytes_to_int( data[18:20] )
+        telemetry['raw_min'] =                from_bytes_to_int( data[21:23] )
+        telemetry['discard_packets_count'] =  from_bytes_to_int( data[24:26] )
+        telemetry['raw_max_set'] =            from_bytes_to_int( data[27:29] )
+        telemetry['raw_min_set'] =            from_bytes_to_int( data[30:32] )
+        telemetry['agc'] =                    from_bytes_to_int( data[33] )
+        telemetry['bit_depth'] =              from_bytes_to_int( data[34] )
+        telemetry['frame_delay'] =            from_bytes_to_int( data[36:38] )
+
+        print telemetry['frame_mean']
+        # for k,v in telemetry.iteritems():
+        #     print k, v
 
     def send_command(self, cmd, data=''):
         if data == '':
             self.serial_thread.write_to_serial(cmd)
         else:
-            arguments = to_bytes(int(data))
+            arguments = int_to_bytes(int(data))
             send = bytearray(cmd) + arguments
             # print ['{0:x}'.format(x) for x in send], int(data)
             self.serial_thread.write_to_serial(send)
