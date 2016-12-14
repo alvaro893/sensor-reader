@@ -4,10 +4,10 @@ from threading import Thread
 from Queue import Queue
 __author__ = 'Alvaro'
 
-scale = 30
+scale = 1
 class AsyncAnalysis(Thread):
     def __init__(self, array):
-        Thread.__init__(self)
+        Thread.__init__(self, name="AnalysisThread")
         self.stopped = False
         self.array = array
         self.queue = Queue(10)

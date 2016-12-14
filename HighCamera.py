@@ -2,7 +2,9 @@ from __future__ import division
 
 import logging
 import numpy as np
+from time import sleep
 
+from Analisys import AsyncAnalysis
 from SerialCommunication import SerialCommunication
 from Utils import int_to_bytes, from_bytes_to_int
 
@@ -28,6 +30,7 @@ class HighCamera:
         self.frame_arr, self.bit_depth_mode = self.create_empty_matrix(mode=DEFAULT_MODE)
         try:
             self.serial_thread = SerialCommunication(self.process_row, port)
+            self.analysis_thread = AsyncAnalysis(self.frame_arr)
         except Exception as e:
             logging.error(e.message)
 
@@ -70,7 +73,8 @@ class HighCamera:
             self.process_matrix()
 
     def process_matrix(self):
-        print self.frame_arr
+        #print self.frame_arr
+        self.analysis_thread.put_arr_in_queue(self.frame_arr)
 
     def process_telemetry(self, data):
         #print len(data), ''.join('{:02x}'.format(x) for x in data)

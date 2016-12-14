@@ -13,7 +13,7 @@ def read_hex(data):
 
 class SerialCommunication(Thread):
     def __init__(self, process_callback, port):
-        Thread.__init__(self)
+        Thread.__init__(self, name="SerialThread")
         self.process_callback = process_callback
         self.ser = serial.Serial(port, BAUD_SPEED)
         self.start()
