@@ -6,7 +6,7 @@ from time import sleep
 
 from Analisys import AsyncAnalysis
 from SerialCommunication import SerialCommunication
-from Utils import int_to_bytes, from_bytes_to_int
+from Utils import int_to_bytes, from_bytes_to_int, descale
 
 """
 Every image has 240 rows (19238 bytes) with the following format:
@@ -19,7 +19,7 @@ FF FF FF <TELEMETRY> (38 Bytes)
 Where the 4th byte is the number of the row
 """
 Y_LENGTH = 240
-X_LENGTH_8 = 80
+X_LENGTH_8 = 160
 X_LENGTH_2 = 12
 DEFAULT_MODE = 8
 
@@ -27,10 +27,10 @@ DEFAULT_MODE = 8
 class HighCamera:
 
     def __init__(self, port):
-        self.frame_arr, self.bit_depth_mode = self.create_empty_matrix(mode=DEFAULT_MODE)
+        self.frame_matrix, self.bit_depth_mode = self.create_empty_matrix(mode=DEFAULT_MODE)
         try:
             self.serial_thread = SerialCommunication(self.process_row, port)
-            self.analysis_thread = AsyncAnalysis(self.frame_arr)
+            self.analysis_thread = AsyncAnalysis(self.frame_matrix)
         except Exception as e:
             logging.error(e.message)
 
@@ -62,10 +62,13 @@ class HighCamera:
             try:
                 data_row = []
                 if self.bit_depth_mode == 8:
-                    data_row = row[1:X_LENGTH_8 + 1]
+                    for v in row[1:-3]:
+                        pix, pix_next = descale(v, 65, 181)
+                        data_row.append(pix)
+                        data_row.append(pix_next)
                 elif self.bit_depth_mode == 2:
-                    data_row = row[1:X_LENGTH_2 + 1]
-                self.frame_arr[n_row] = np.array(data_row)
+                    data_row = row[1:-3]
+                self.frame_matrix[n_row] = np.array(data_row)
             except ValueError as e:
                 logging.warn("row size is not suitable: %s", e.message)
         else:  # telemetry row
@@ -74,7 +77,7 @@ class HighCamera:
 
     def process_matrix(self):
         #print self.frame_arr
-        self.analysis_thread.put_arr_in_queue(self.frame_arr)
+        self.analysis_thread.put_arr_in_queue(self.frame_matrix[::-1])
 
     def process_telemetry(self, data):
         #print len(data), ''.join('{:02x}'.format(x) for x in data)
@@ -125,7 +128,7 @@ class HighCamera:
         self.send_command('a')
 
     def bit_depth(self, data):
-        self.frame_arr, self.bit_depth_mode = self.create_empty_matrix(mode=int(data))
+        self.frame_matrix, self.bit_depth_mode = self.create_empty_matrix(mode=int(data))
         logging.warn('mode was changed to %d bit depth', self.bit_depth_mode)
         self.send_command('B', data)
 
