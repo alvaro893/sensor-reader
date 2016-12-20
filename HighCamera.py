@@ -1,15 +1,14 @@
-from __future__ import division
-
 import logging
 import numpy as np
 from time import sleep
 
 from Analisys import AsyncAnalysis
 from SerialCommunication import SerialCommunication
-from Utils import int_to_bytes, from_bytes_to_int, descale
+from Utils import int_to_bytes, from_bytes_to_int
 
 """
-Every image has 240 rows (19238 bytes) with the following format:
+00 01 02 04 ------
+Data is arranged on 240(0xF0) rows of 84 bytes(FF FF FF n_row and 80 of data):
 FF FF FF 01 <DATA>
 FF FF FF 02 <DATA>
 FF FF FF 03 <DATA>
@@ -17,9 +16,13 @@ FF FF FF 03 <DATA>
 FF FF FF F0 <DATA>
 FF FF FF <TELEMETRY> (38 Bytes)
 Where the 4th byte is the number of the row
+Every row of the actual picture has 2 rows of the raw data
+so the image is 160 x 120
 """
 Y_LENGTH = 240
 X_LENGTH_8 = 160
+X_LENGTH_IMAGE = 160
+y_LENGTH_IMAGE = 120
 X_LENGTH_2 = 12
 DEFAULT_MODE = 8
 
@@ -28,6 +31,7 @@ class HighCamera:
 
     def __init__(self, port):
         self.frame_matrix, self.bit_depth_mode = self.create_empty_matrix(mode=DEFAULT_MODE)
+        self.telemetry = {}
         try:
             self.serial_thread = SerialCommunication(self.process_row, port)
             self.analysis_thread = AsyncAnalysis(self.frame_matrix)
@@ -39,36 +43,30 @@ class HighCamera:
         print(data)
 
     def create_empty_matrix(self, mode=8):
-        if mode == 8:
-            x_length = X_LENGTH_8
-        elif mode == 2:
-            x_length = X_LENGTH_2
-        else:
-            x_length = 0
+        # if mode == 8:
+        #     x_length = X_LENGTH_IMAGE
+        # elif mode == 2:
+        #     x_length = X_LENGTH_2
+        # else:
+        #     x_length = 0
 
         bit_depth_mode = 0
         if mode in {2, 8, 0}:
             bit_depth_mode = mode
 
-        return np.zeros((Y_LENGTH, x_length), dtype=np.uint8), bit_depth_mode
+        return np.zeros((y_LENGTH_IMAGE, X_LENGTH_IMAGE), dtype=np.uint8), bit_depth_mode
 
 
     def process_row(self, row):
-        if row < X_LENGTH_8:
-            return
-
         n_row = row[0]
+
         if n_row < Y_LENGTH:  # normal row
             try:
-                data_row = []
-                if self.bit_depth_mode == 8:
-                    for v in row[1:-3]:
-                        pix, pix_next = descale(v, 65, 181)
-                        data_row.append(pix)
-                        data_row.append(pix_next)
-                elif self.bit_depth_mode == 2:
-                    data_row = row[1:-3]
-                self.frame_matrix[n_row] = np.array(data_row)
+                for indx, val in enumerate(row[1:-3]):
+                    f_row = (n_row)/2
+                    f_col = (n_row) % 2 * 80 + indx
+                    self.frame_matrix[f_row][f_col] = val
+
             except ValueError as e:
                 logging.warn("row size is not suitable: %s", e.message)
         else:  # telemetry row
@@ -76,7 +74,13 @@ class HighCamera:
             self.process_matrix()
 
     def process_matrix(self):
-        #print self.frame_arr
+        print self.frame_matrix
+        try:
+            self.analysis_thread.max_t = self.telemetry['raw_max']
+            self.analysis_thread.min_t = self.telemetry['raw_min']
+            print self.telemetry['raw_max'], self.telemetry['raw_min']
+        except KeyError as e:
+            logging.warn(e.message)
         self.analysis_thread.put_arr_in_queue(self.frame_matrix[::-1])
 
     def process_telemetry(self, data):
@@ -97,6 +101,7 @@ class HighCamera:
         telemetry['bit_depth'] =              from_bytes_to_int( data[34] )
         telemetry['frame_delay'] =            from_bytes_to_int( data[36:38] )
 
+        self.telemetry = telemetry
         # for k,v in telemetry.iteritems():
         #     print k, v
 
