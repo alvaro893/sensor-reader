@@ -3,6 +3,7 @@ import os
 import argparse
 import logging
 from Constants import *
+from ui.MainWindow import run_ui
 
 __author__ = 'Alvaro'
 
@@ -24,15 +25,9 @@ def define_log_level():
     logging.basicConfig(level=args.loglevel)
 
 
-def define_ports():
-    ports = PORT_LINUX
-    if os.name == WINDOWS:
-        ports = PORT_WINDOWS
-    return ports
-
-
 def main():
     define_log_level()
-    Gui.start()
+    run_ui()
 
-main()
+if __name__ == '__main__':
+    main()

@@ -3,6 +3,7 @@ import numpy as np
 from time import sleep
 
 from Analisys import AsyncAnalysis
+from Camera import Camera
 from SerialCommunication import SerialCommunication
 from Utils import int_to_bytes, from_bytes_to_int
 
@@ -22,40 +23,17 @@ so the image is 160 x 120
 Y_LENGTH = 240
 X_LENGTH_8 = 160
 X_LENGTH_IMAGE = 160
-y_LENGTH_IMAGE = 120
-X_LENGTH_2 = 12
+Y_LENGTH_IMAGE = 120
 DEFAULT_MODE = 8
 
 
-class HighCamera:
+class HighCamera(Camera):
 
     def __init__(self, port):
-        self.frame_matrix, self.bit_depth_mode = self.create_empty_matrix(mode=DEFAULT_MODE)
-        self.telemetry = {}
-        try:
-            self.serial_thread = SerialCommunication(self.process_row, port)
-            self.analysis_thread = AsyncAnalysis(self.frame_matrix)
-        except Exception as e:
-            logging.error(e.message)
-
+        Camera.__init__(self, port, Y_LENGTH_IMAGE, X_LENGTH_IMAGE)
         self.bit_depth(DEFAULT_MODE)
     def processData(self, data):
         print(data)
-
-    def create_empty_matrix(self, mode=8):
-        # if mode == 8:
-        #     x_length = X_LENGTH_IMAGE
-        # elif mode == 2:
-        #     x_length = X_LENGTH_2
-        # else:
-        #     x_length = 0
-
-        bit_depth_mode = 0
-        if mode in {2, 8, 0}:
-            bit_depth_mode = mode
-
-        return np.zeros((y_LENGTH_IMAGE, X_LENGTH_IMAGE), dtype=np.uint8), bit_depth_mode
-
 
     def process_row(self, row):
         n_row = row[0]
@@ -65,23 +43,22 @@ class HighCamera:
                 for indx, val in enumerate(row[1:-3]):
                     f_row = (n_row)/2
                     f_col = (n_row) % 2 * 80 + indx
-                    self.frame_matrix[f_row][f_col] = val
+                    self.frame_arr[f_row][f_col] = val
 
             except ValueError as e:
                 logging.warn("row size is not suitable: %s", e.message)
         else:  # telemetry row
             self.process_telemetry(row)
-            self.process_matrix()
+            self.process_frame()
 
-    def process_matrix(self):
-        print self.frame_matrix
-        try:
-            self.analysis_thread.max_t = self.telemetry['raw_max']
-            self.analysis_thread.min_t = self.telemetry['raw_min']
-            print self.telemetry['raw_max'], self.telemetry['raw_min']
-        except KeyError as e:
-            logging.warn(e.message)
-        self.analysis_thread.put_arr_in_queue(self.frame_matrix[::-1])
+    def process_frame(self):
+        #print self.frame_arr
+        self.last_frame = self.frame_arr[::-1] #invert
+        #self.network_thread.add_to_buffer(self.last_frame)
+        #self.analysis_thread.put_arr_in_queue(self.frame_arr[::-1])
+
+    def frame_callback(self, frame):
+        self.process_row(frame)
 
     def process_telemetry(self, data):
         #print len(data), ''.join('{:02x}'.format(x) for x in data)
@@ -133,8 +110,7 @@ class HighCamera:
         self.send_command('a')
 
     def bit_depth(self, data):
-        self.frame_matrix, self.bit_depth_mode = self.create_empty_matrix(mode=int(data))
-        logging.warn('mode was changed to %d bit depth', self.bit_depth_mode)
+        logging.warn('mode was changed to %d bit depth', int(data))
         self.send_command('B', data)
 
     def delay(self, data):
@@ -142,3 +118,4 @@ class HighCamera:
 
     def stop(self):
         self.serial_thread.stop_reading()
+        self.network_thread.stop()

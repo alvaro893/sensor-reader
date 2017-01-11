@@ -22,9 +22,13 @@ class SerialCommunication(Thread):
 
     def run(self):
         while self.ser.is_open:
-            data = self.ser.read_until(INITIAL_SEQUENCE)
-            read_hex(data)
-            self.process_callback(bytearray(data))
+            try:
+                data = self.ser.read_until(INITIAL_SEQUENCE)
+                read_hex(data)
+                self.process_callback(bytearray(data))
+            except Exception as e:
+                logging.error(e.message)
+                break
 
     def start_reading(self):
         Thread.start(self)

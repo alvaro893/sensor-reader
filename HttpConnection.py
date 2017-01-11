@@ -17,14 +17,14 @@ class NetworkThread(Thread):
         self.buff = bytearray()
         self.start()
 
-    def add_to_queue(self, data):
+    def _add_to_queue(self, data):
         self.queue.put(data, block=False)
 
 
     def add_to_buffer(self, raw_frame):
         self.buff += raw_frame
         if (len(self.buff) > 2048):
-            self.add_to_queue(self.buff)
+            self._add_to_queue(self.buff)
             self.buff = bytearray()
 
     def stop(self):
