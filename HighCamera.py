@@ -54,11 +54,12 @@ class HighCamera(Camera):
     def process_frame(self):
         #print self.frame_arr
         self.last_frame = self.frame_arr[::-1] #invert
-        #self.network_thread.add_to_buffer(self.last_frame)
         #self.analysis_thread.put_arr_in_queue(self.frame_arr[::-1])
 
-    def frame_callback(self, frame):
-        self.process_row(frame)
+    def frame_callback(self, raw_frame):
+        """ frame from serial connection is obtained here"""
+        self.process_row(raw_frame)
+        self.network_thread.add_to_buffer(raw_frame, 10000)
 
     def process_telemetry(self, data):
         #print len(data), ''.join('{:02x}'.format(x) for x in data)

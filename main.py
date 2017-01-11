@@ -22,7 +22,8 @@ def define_log_level():
         action="store_const", dest="loglevel", const=logging.INFO,
     )
     args = parser.parse_args()
-    logging.basicConfig(level=args.loglevel)
+    FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
+    logging.basicConfig(format=FORMAT, level=args.loglevel)
 
 
 def main():

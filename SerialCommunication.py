@@ -26,7 +26,7 @@ class SerialCommunication(Thread):
                 data = self.ser.read_until(INITIAL_SEQUENCE)
                 read_hex(data)
                 self.process_callback(bytearray(data))
-            except Exception as e:
+            except serial.SerialException as e:
                 logging.error(e.message)
                 break
 

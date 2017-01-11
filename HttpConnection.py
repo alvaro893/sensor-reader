@@ -21,11 +21,16 @@ class NetworkThread(Thread):
         self.queue.put(data, block=False)
 
 
-    def add_to_buffer(self, raw_frame):
+    def add_to_buffer(self, raw_frame, buff_size=2048):
         self.buff += raw_frame
-        if (len(self.buff) > 2048):
-            self._add_to_queue(self.buff)
-            self.buff = bytearray()
+        if (len(self.buff) > buff_size):
+            #print "network queue", self.queue.qsize()
+            if self.queue.full():
+                log.warn("network queue is full, dropping last buffer")
+                self.queue.get()
+            else:
+                self._add_to_queue(self.buff)
+                self.buff = bytearray()
 
     def stop(self):
         self.stopped = True
