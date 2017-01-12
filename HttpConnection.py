@@ -11,7 +11,7 @@ key = Constants.KEY
 class NetworkThread(Thread):
     def __init__(self):
         Thread.__init__(self)
-        self.queue = Queue(50)
+        self.queue = Queue(10)
         self.stopped = False
         self.parameters = {}
         self.buff = bytearray()

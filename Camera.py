@@ -20,7 +20,7 @@ class Camera:
 
 
     def frame_callback(self, data):
-        self.network_thread.add_to_buffer(data, buff_size=20100)
+        self.network_thread.add_to_buffer(data, buff_size=100990)
         #raise RuntimeError('frame_callback not implemented')
 
     def stop(self):
