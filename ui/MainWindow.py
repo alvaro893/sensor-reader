@@ -51,14 +51,15 @@ class HighResolutionCanvas(MyMplCanvas):
 
 
 class ColorMplCanvas(MyMplCanvas):
-
+    #TODO: port
     def __init__(self,port=None, *args, **kwargs):
         MyMplCanvas.__init__(self, *args, **kwargs)
+        #TODO: sub class for diferent cameras
         self.camera = HighCamera(serial_ports()[0])
-        arr = self.camera.frame_arr
+        arr = self.camera.last_frame
         timer = QtCore.QTimer(self)
         timer.timeout.connect(self.update_figure)
-        timer.start(500)
+        timer.start(1000)
 
         # configure row and columns of plots
         self.pcolorm = self.axes.pcolormesh(arr, cmap='rainbow')

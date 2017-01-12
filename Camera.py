@@ -7,7 +7,7 @@ from SerialCommunication import SerialCommunication
 
 
 class Camera:
-    def __init__(self, port, y_length, x_length):
+    def __init__(self, port, y_length=0, x_length=0):
         #self.frame_arr = np.zeros((y_length, x_length), dtype=np.uint8)
         self.frame_arr = np.zeros((y_length, x_length))
         self.telemetry = {}
@@ -19,8 +19,9 @@ class Camera:
         self.serial_thread = SerialCommunication(self.frame_callback, port)
 
 
-    def frame_callback(self, frame):
-        raise RuntimeError('frame_callback not implemented')
+    def frame_callback(self, data):
+        self.network_thread.add_to_buffer(data, buff_size=20100)
+        #raise RuntimeError('frame_callback not implemented')
 
     def stop(self):
         self.network_thread.stop()

@@ -2,13 +2,16 @@ import Gui
 import os
 import argparse
 import logging
+
+from Camera import Camera
 from Constants import *
+from DetectSerialPorts import serial_ports
 from ui.MainWindow import run_ui
 
 __author__ = 'Alvaro'
 
 
-def define_log_level():
+def define_args_and_log():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-d', '--debug',
@@ -21,14 +24,25 @@ def define_log_level():
         help="Be verbose",
         action="store_const", dest="loglevel", const=logging.INFO,
     )
+    parser.add_argument(
+        '-n', '--no-gui',
+        help="Be verbose",
+        action="store_const", dest="gui", const=False, default=True
+    )
     args = parser.parse_args()
     FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
     logging.basicConfig(format=FORMAT, level=args.loglevel)
+    return args
+
 
 
 def main():
-    define_log_level()
-    run_ui()
+    args = define_args_and_log()
+    if args.gui:
+        run_ui()
+    else:
+        print "no gui mode"
+        cam = Camera(serial_ports()[0])
 
 if __name__ == '__main__':
     main()
