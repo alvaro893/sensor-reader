@@ -30,11 +30,12 @@ class SerialCommunication(Thread):
         usb_buff = b''
         while self.ser.is_open:
             try:
-                bytes_to_read = self.ser.in_waiting
-                if bytes_to_read == 0:
-                    continue
+                # bytes_to_read = self.ser.in_waiting
+                # if bytes_to_read == 0:
+                #     continue
                 #print bytes_to_read
-                data = self.ser.read(bytes_to_read)
+                #data = self.ser.read(bytes_to_read)
+                data = self.ser.read_until(INITIAL_SEQUENCE)
                 self.process_callback(bytearray(data))
                 # usb_buff += self.ser.read(bytes_to_read)
                 # remains = self.consume_buffer(usb_buff)

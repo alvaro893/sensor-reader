@@ -2,7 +2,8 @@
 AUTHOR = 'Alvaro'
 __author__ = AUTHOR
 
-URL = "https://ir-sensor-cloud.appspot.com/"
+# URL = "https://ir-sensor-cloud.appspot.com/"
+URL = "http://server-ir-cloud.44fs.preview.openshiftapps.com/"
 URL_DEBUG = "http://localhost:5000"
 KEY = "development_server"
 
