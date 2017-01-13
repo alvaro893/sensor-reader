@@ -6,6 +6,8 @@ import logging
 from Camera import Camera
 from Constants import *
 from DetectSerialPorts import serial_ports
+from HighCamera import HighCamera
+from lowCamera import LowCamera
 from ui.MainWindow import run_ui
 
 __author__ = 'Alvaro'
@@ -26,8 +28,14 @@ def define_args_and_log():
     )
     parser.add_argument(
         '-n', '--no-gui',
-        help="Be verbose",
+        help="only send data to cloud",
         action="store_const", dest="gui", const=False, default=True
+    )
+
+    parser.add_argument(
+        '-l',
+        help="select low resolution camera (only whit --no-gui)",
+        action="store_const", dest="low_cam", const=True, default=False
     )
     args = parser.parse_args()
     FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
@@ -42,7 +50,11 @@ def main():
         run_ui()
     else:
         print "no gui mode"
-        cam = Camera(serial_ports()[0])
+        port = serial_ports()[0]
+        if args.low_cam:
+            cam = LowCamera(port, only_send_data=True)
+        else:
+            cam = HighCamera(port, only_send_data=True)
 
 if __name__ == '__main__':
     main()

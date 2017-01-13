@@ -16,9 +16,9 @@ Y_LENGTH = 12
 SENSOR_POSITIONS = (4, 0, 8)
 
 class LowCamera(Camera):
-    def __init__(self, port):
-        Camera.__init__(self, port, Y_LENGTH, X_LENGTH)
-        print port
+    def __init__(self, *args, **kwargs):
+        kwargs['y_length'] = Y_LENGTH; kwargs['x_length'] = X_LENGTH
+        Camera.__init__(self,  *args, **kwargs)
 
     def get_absolute_values(self):
         return min(raw_min), max(raw_max), np.mean(raw_mean)
@@ -39,8 +39,10 @@ class LowCamera(Camera):
     def frame_callback(self, raw_frame):
         """ sends raw frame to network and call process frame """
         logging.debug(raw_frame)
-        self.network_thread.add_to_buffer(raw_frame)
-        processed_frame = self.process_frame(raw_frame)
+        if self.only_send_data:
+            self.network_thread.add_to_buffer(raw_frame)
+        else:
+            self.last_frame = self.process_frame(raw_frame)
 
 
     def process_frame(self,raw_frame):

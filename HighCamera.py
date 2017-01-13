@@ -21,7 +21,6 @@ Every row of the actual picture has 2 rows of the raw data
 so the image is 160 x 120 (20198 Bytes)
 """
 Y_LENGTH = 240
-X_LENGTH_8 = 160
 X_LENGTH_IMAGE = 160
 Y_LENGTH_IMAGE = 120
 DEFAULT_MODE = 8
@@ -29,11 +28,10 @@ DEFAULT_MODE = 8
 
 class HighCamera(Camera):
 
-    def __init__(self, port):
-        Camera.__init__(self, port, Y_LENGTH_IMAGE, X_LENGTH_IMAGE)
+    def __init__(self, *args, **kwargs):
+        kwargs['y_length'] = Y_LENGTH_IMAGE; kwargs['x_length'] = X_LENGTH_IMAGE
+        Camera.__init__(self,  *args, **kwargs)
         self.bit_depth(DEFAULT_MODE)
-    def processData(self, data):
-        print(data)
 
     def process_row(self, row):
         n_row = row[0]
@@ -58,8 +56,10 @@ class HighCamera(Camera):
 
     def frame_callback(self, raw_data):
         """ the hi-res camera gets one row from serial connection"""
-        self.process_row(raw_data)
-        self.network_thread.add_to_buffer(raw_data, 10000)
+        if self.only_send_data:
+            self.network_thread.add_to_buffer(raw_data, buff_size=100990)
+        else:
+            self.process_row(raw_data)
 
     def process_telemetry(self, data):
         #print len(data), ''.join('{:02x}'.format(x) for x in data)
