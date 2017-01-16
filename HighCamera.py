@@ -34,6 +34,8 @@ class HighCamera(Camera):
         self.bit_depth(DEFAULT_MODE)
 
     def process_row(self, row):
+        if(len(row) < 80):
+            return
         n_row = row[0]
 
         if n_row < Y_LENGTH:  # normal row
