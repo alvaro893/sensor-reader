@@ -55,6 +55,16 @@ class MplCanvasHighCamera(MyMplCanvas):
         MyMplCanvas.__init__(self, *args, **kwargs)
         self.camera = HighCamera(port)
         arr = self.camera.last_frame
+        mainWindow = self.window()
+        mainWindow.syncButton.clicked.connect(self.camera.sync)
+        mainWindow.calibrateButton.clicked.connect(self.camera.calibrate)
+        mainWindow.delayButton.clicked.connect(lambda: self.camera.delay(mainWindow.delayInput.text()))
+        mainWindow.bitDepthButton.clicked.connect(lambda:
+                                                  self.camera.bit_depth(int(mainWindow.bitDepthComboBox.currentText())))
+        mainWindow.maxRawButton.clicked.connect(lambda: self.camera.max_raw(mainWindow.maxRawSpinBox.text()))
+        mainWindow.minRawButton.clicked.connect(lambda: self.camera.min_raw(mainWindow.minRawSpinBox.text()))
+        mainWindow.autoHighButton.clicked.connect(self.camera.auto_gain_hi)
+        mainWindow.autoLowButton.clicked.connect(self.camera.auto_gain_low)
 
 
         # configure row and columns of plots
@@ -66,6 +76,20 @@ class MplCanvasHighCamera(MyMplCanvas):
         self.pcolorm.set_array(new_arr.ravel())
         self.pcolorm.set_clim([new_arr.min(), new_arr.max()])  # autoscale
         self.draw()
+        mainWindow = self.window()
+        telemetry = self.camera.telemetry
+        mainWindow.maxRawLabel.setText(str(telemetry['raw_max_set']))
+        mainWindow.minRawLabel.setText(str(telemetry['raw_min_set']))
+        mainWindow.bitDepthLabel.setText(chr(telemetry['bit_depth']))
+        mainWindow.delayLabel.setText(str(telemetry['frame_delay']))
+        mainWindow.timeCounterLabel.setText(str(telemetry['time_counter']))
+        mainWindow.frameCounterLabel.setText(str(telemetry['frame_counter']))
+        mainWindow.frameMeanLabel.setText(str(telemetry['frame_mean']))
+        mainWindow.maxTempLabel.setText(str(telemetry['raw_max']))
+        mainWindow.minTempLabel.setText(str(telemetry['raw_min']))
+        mainWindow.discardPacketsLabel.setText(str(telemetry['discard_packets_count']))
+        mainWindow.agcLabel.setText(str(telemetry['agc']))
+        mainWindow.fpaTempLabel.setText(str(telemetry['fpa_temp']))
 
     def close_camera(self):
         self.camera.stop()
@@ -87,6 +111,10 @@ class MplCanvasLowCamera(MyMplCanvas):
         self.pcolorm.set_array(new_arr.ravel())
         self.pcolorm.set_clim([new_arr.min(), new_arr.max()]) #autoscale
         self.draw()
+        amin, amax, amean =  ("%.2f" % i for i in self.camera.get_absolute_values())
+        self.window().maxTempLabel.setText(str(amax))
+        self.window().minTempLabel.setText(str(amin))
+        self.window().meanTempLabel.setText(str(amean))
 
     def close_camera(self):
         self.camera.stop()
