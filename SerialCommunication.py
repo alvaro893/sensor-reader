@@ -22,9 +22,9 @@ class SerialCommunication(Thread):
         self.lastline = b''
         self.process_callback = process_callback
         self.ser = serial.Serial(port, BAUD_SPEED)
+        self.setDaemon(True)
         self.start()
         print("serial port:", port, " ", BAUD_SPEED, " ", os.name)
-        # self.daemon = True
 
     def run(self):
         usb_buff = b''
@@ -42,7 +42,10 @@ class SerialCommunication(Thread):
                 # usb_buff += remains
             except serial.SerialException as e:
                 logging.error(e.message)
-                break
+                if len(data) > 0:
+                    pass
+                else:
+                    break
 
     def consume_buffer(self, usb_buff):
         lines = usb_buff.split(INITIAL_SEQUENCE)
