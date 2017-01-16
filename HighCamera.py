@@ -118,15 +118,12 @@ class HighCamera(Camera):
             self.serial_thread.write_to_serial(send)
 
     def sync(self):
-        print "check! sync"
         self.send_command('S')
 
     def calibrate(self):
         self.send_command('C')
 
     def max_raw(self, data):
-        print "check! max_raw"
-
         self.send_command('H', data)
 
     def min_raw(self, data):
