@@ -13,9 +13,6 @@ def read_hex(data):
     logging.warn(' '.join(x.encode('hex') for x in data))
 
 
-
-
-
 class SerialCommunication(Thread):
     def __init__(self, process_callback, port):
         Thread.__init__(self, name="SerialThread")
@@ -27,19 +24,14 @@ class SerialCommunication(Thread):
         print("serial port:", port, " ", BAUD_SPEED, " ", os.name)
 
     def run(self):
-        usb_buff = b''
+        data = b''
         while self.ser.is_open:
             try:
-                # bytes_to_read = self.ser.in_waiting
-                # if bytes_to_read == 0:
-                #     continue
-                #print bytes_to_read
-                #data = self.ser.read(bytes_to_read)
-                data = self.ser.read_until(INITIAL_SEQUENCE)
-                self.process_callback(bytearray(data))
-                # usb_buff += self.ser.read(bytes_to_read)
-                # remains = self.consume_buffer(usb_buff)
-                # usb_buff += remains
+                bytes_to_read = self.ser.in_waiting
+
+                data += self.ser.read(bytes_to_read)
+                data = self.consume_data(data)
+
             except serial.SerialException as e:
                 logging.error(e.message)
                 if len(data) > 0:
@@ -47,16 +39,17 @@ class SerialCommunication(Thread):
                 else:
                     break
 
-    def consume_buffer(self, usb_buff):
-        lines = usb_buff.split(INITIAL_SEQUENCE)
-        # print len(lines)
-        remains = lines.pop()
-        # read_hex(lines[-1])
-        for line in lines:
-            #read_hex(line)
-            self.process_callback(bytearray(line))
+    def consume_data(self, data):
+        lines = data.split(INITIAL_SEQUENCE)
+        if (len(lines) < 1):
+            return data
 
-        return remains
+        last = lines.pop()
+
+        for line in lines:
+            self.process_callback(bytearray(line))
+        return last
+
 
     def get_line(self):
         return bytearray(self.lastline)

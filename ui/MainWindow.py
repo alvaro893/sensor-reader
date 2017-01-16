@@ -43,25 +43,19 @@ class MyMplCanvas(FigureCanvas):
                                    QtGui.QSizePolicy.Expanding,
                                    QtGui.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
-
-class LowResolutionCanvas(MyMplCanvas):
-    pass
-class HighResolutionCanvas(MyMplCanvas):
-    pass
+        timer = QtCore.QTimer(self)
+        timer.timeout.connect(self.update_figure)
+        timer.start(100)
 
 
 
 
 class MplCanvasHighCamera(MyMplCanvas):
-    #TODO: port
     def __init__(self,port=None, *args, **kwargs):
         MyMplCanvas.__init__(self, *args, **kwargs)
-        #TODO: sub class for diferent cameras
         self.camera = HighCamera(port)
         arr = self.camera.last_frame
-        timer = QtCore.QTimer(self)
-        timer.timeout.connect(self.update_figure)
-        timer.start(1000)
+
 
         # configure row and columns of plots
         self.pcolorm = self.axes.pcolormesh(arr, cmap='rainbow')
@@ -77,14 +71,11 @@ class MplCanvasHighCamera(MyMplCanvas):
         self.camera.stop()
 
 class MplCanvasLowCamera(MyMplCanvas):
-    # TODO: port
     def __init__(self, port=None, *args, **kwargs):
         MyMplCanvas.__init__(self, *args, **kwargs)
         self.camera = LowCamera(port)  #serial_ports()[0]
         arr = self.camera.last_frame
-        timer = QtCore.QTimer(self)
-        timer.timeout.connect(self.update_figure)
-        timer.start(1000)
+
 
         # configure row and columns of plots
         self.pcolorm = self.axes.pcolormesh(arr, cmap='rainbow')
