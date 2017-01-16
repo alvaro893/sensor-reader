@@ -1,10 +1,6 @@
-import Gui
-import os
 import argparse
 import logging
 
-from Camera import Camera
-from Constants import *
 from DetectSerialPorts import serial_ports
 from HighCamera import HighCamera
 from lowCamera import LowCamera
