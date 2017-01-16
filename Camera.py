@@ -16,7 +16,8 @@ class Camera:
         self.frame_ready = False
         self.last_frame = self.frame_arr
         self.only_send_data = only_send_data
-        self.network_thread = NetworkThread()
+        if(only_send_data):
+            self.network_thread = NetworkThread(daemon=False)
         self.serial_thread = SerialCommunication(self.frame_callback, port)
 
 

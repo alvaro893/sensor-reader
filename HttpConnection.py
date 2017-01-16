@@ -9,12 +9,13 @@ url = Constants.URL
 key = Constants.KEY
 
 class NetworkThread(Thread):
-    def __init__(self):
+    def __init__(self, daemon=True):
         Thread.__init__(self)
         self.queue = Queue(10)
         self.stopped = False
         self.parameters = {}
         self.buff = bytearray()
+        self.setDaemon(daemon)
         self.start()
 
     def _add_to_queue(self, data):
