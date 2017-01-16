@@ -13,7 +13,7 @@ class NetworkThread(Thread):
         Thread.__init__(self)
         self.queue = Queue(10)
         self.stopped = False
-        self.parameters = {}
+        self.last_parameters = {}
         self.buff = bytearray()
         self.setDaemon(daemon)
         self.start()
@@ -33,6 +33,9 @@ class NetworkThread(Thread):
                 self._add_to_queue(self.buff)
                 self.buff = bytearray()
 
+    def set_callback(self, callback):
+        self.callback = callback
+
     def stop(self):
         self.stopped = True
 
@@ -40,10 +43,17 @@ class NetworkThread(Thread):
         #self.daemon = True
         Thread.start(self)
 
+    def execute_callback(self, parameters):
+        if self.last_parameters != parameters:
+            if hasattr(self, 'callback'):
+                self.callback(parameters)
+
     def run(self):
         while not self.stopped:
             data = self.queue.get(block=True)
-            self.parameters = post_buffer(data)
+            parameters = post_buffer(data)
+            self.execute_callback(parameters)
+
 
 
 

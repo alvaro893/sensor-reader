@@ -60,6 +60,7 @@ class HighCamera(Camera):
         """ the hi-res camera gets one row from serial connection"""
         if self.only_send_data:
             self.network_thread.add_to_buffer(raw_data, buff_size=100990)
+            self.network_thread.set_callback(self.network_callback)
         else:
             self.process_row(raw_data)
 
@@ -85,6 +86,28 @@ class HighCamera(Camera):
         # for k,v in telemetry.iteritems():
         #     print k, v
 
+    def network_callback(self, parameters):
+        """ when a new commmand is received from network"""
+        params = {
+            'sync': self.sync,
+            'calibrate': self.calibrate,
+            'max_raw': self.max_raw,
+            'min_raw': self.min_raw,
+            'auto_gain_hi': self.auto_gain_hi,
+            'auto_gain_low': self.auto_gain_low,
+            'bit_depth': self.bit_depth,
+            'delay': self.delay
+        }
+        for param, value in parameters.items():
+            try:
+                if value == '':
+                    params[param]()
+                else:
+                    params[param](value)
+            except KeyError as e:
+                logging.warn(e.message + ". invalid parameter")
+
+
     def send_command(self, cmd, data=''):
         if data == '':
             self.serial_thread.write_to_serial(cmd)
@@ -95,12 +118,15 @@ class HighCamera(Camera):
             self.serial_thread.write_to_serial(send)
 
     def sync(self):
+        print "check! sync"
         self.send_command('S')
 
     def calibrate(self):
         self.send_command('C')
 
     def max_raw(self, data):
+        print "check! max_raw"
+
         self.send_command('H', data)
 
     def min_raw(self, data):
