@@ -55,6 +55,8 @@ class MplCanvasHighCamera(MyMplCanvas):
         MyMplCanvas.__init__(self, *args, **kwargs)
         self.camera = HighCamera(port)
         arr = self.camera.last_frame
+
+        # configure buttons for camera commands
         mainWindow = self.window()
         mainWindow.syncButton.clicked.connect(self.camera.sync)
         mainWindow.calibrateButton.clicked.connect(self.camera.calibrate)
@@ -78,6 +80,8 @@ class MplCanvasHighCamera(MyMplCanvas):
         self.draw()
         mainWindow = self.window()
         telemetry = self.camera.telemetry
+
+        # show telemetry
         mainWindow.maxRawLabel.setText(str(telemetry['raw_max_set']))
         mainWindow.minRawLabel.setText(str(telemetry['raw_min_set']))
         mainWindow.bitDepthLabel.setText(chr(telemetry['bit_depth']))

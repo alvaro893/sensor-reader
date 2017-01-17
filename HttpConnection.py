@@ -75,6 +75,11 @@ def post_n_people(n):
 
 def post_buffer(data):
     r = requests.post(url + '/video/buffer', data=data, headers={'Content-Type': 'application/octet-stream'})
-    log.warn("status:%s, headers:%s, url:%s", r.status_code, r.headers, r.url)
-    parameters = r.json()
+    log.debug("status:%s, headers:%s, url:%s", r.status_code, r.headers, r.url)
+    try:
+        parameters = r.json()
+        log.debug("parameters:" + str(parameters))
+    except ValueError as e:
+        print e.message
+        parameters = {}
     return parameters

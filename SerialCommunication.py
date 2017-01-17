@@ -29,8 +29,11 @@ class SerialCommunication(Thread):
             try:
                 bytes_to_read = self.ser.in_waiting
 
-                data += self.ser.read(bytes_to_read)
-                data = self.consume_data(data)
+                # data += self.ser.read(bytes_to_read)
+                # data = self.consume_data(data)
+
+                data = self.ser.read(bytes_to_read)
+                self.process_callback(bytearray(data))
 
             except serial.SerialException as e:
                 logging.error(e.message)

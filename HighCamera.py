@@ -29,9 +29,19 @@ DEFAULT_MODE = 8
 class HighCamera(Camera):
 
     def __init__(self, *args, **kwargs):
+        self.params = {
+            'sync': self.sync,
+            'calibrate': self.calibrate,
+            'max_raw': self.max_raw,
+            'min_raw': self.min_raw,
+            'auto_gain_hi': self.auto_gain_hi,
+            'auto_gain_low': self.auto_gain_low,
+            'bit_depth': self.bit_depth,
+            'delay': self.delay
+        }
         kwargs['y_length'] = Y_LENGTH_IMAGE; kwargs['x_length'] = X_LENGTH_IMAGE
         Camera.__init__(self,  *args, **kwargs)
-        self.bit_depth(DEFAULT_MODE)
+        #self.bit_depth(DEFAULT_MODE)
 
     def process_row(self, row):
         if(len(row) < 80):
@@ -59,7 +69,7 @@ class HighCamera(Camera):
     def frame_callback(self, raw_data):
         """ the hi-res camera gets one row from serial connection"""
         if self.only_send_data:
-            self.network_thread.add_to_buffer(raw_data, buff_size=100990)
+            self.network_thread.add_to_buffer(raw_data, buff_size=20000)
             self.network_thread.set_callback(self.network_callback)
         else:
             self.process_row(raw_data)
@@ -69,9 +79,9 @@ class HighCamera(Camera):
         if (len(data) < 40):
             return
         telemetry = {}
-        telemetry['time_counter'] =           from_bytes_to_int( data[4:6] + data[1:3]) / 1000.0
-        telemetry['frame_counter'] =          from_bytes_to_int( data[10:12] + data[7:9] ) / 1000.0
-        telemetry['frame_mean'] =             from_bytes_to_int( data[13:15] ) / 1000.0
+        telemetry['time_counter'] =           from_bytes_to_int( data[4:6] + data[1:3])
+        telemetry['frame_counter'] =          from_bytes_to_int( data[10:12] + data[7:9] )
+        telemetry['frame_mean'] =             from_bytes_to_int( data[13:15] )
         telemetry['fpa_temp'] =               from_bytes_to_int( data[16:18] )
         telemetry['raw_max'] =                from_bytes_to_int( data[18:20] )
         telemetry['raw_min'] =                from_bytes_to_int( data[21:23] )
@@ -88,16 +98,9 @@ class HighCamera(Camera):
 
     def network_callback(self, parameters):
         """ when a new commmand is received from network"""
-        params = {
-            'sync': self.sync,
-            'calibrate': self.calibrate,
-            'max_raw': self.max_raw,
-            'min_raw': self.min_raw,
-            'auto_gain_hi': self.auto_gain_hi,
-            'auto_gain_low': self.auto_gain_low,
-            'bit_depth': self.bit_depth,
-            'delay': self.delay
-        }
+        params = self.params
+        if parameters == {}:
+            return
         for param, value in parameters.items():
             try:
                 if value == '':
