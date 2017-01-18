@@ -69,7 +69,7 @@ class HighCamera(Camera):
     def frame_callback(self, raw_data):
         """ the hi-res camera gets one row from serial connection"""
         if self.only_send_data:
-            self.network_thread.add_to_buffer(raw_data, buff_size=20000)
+            self.network_thread.add_to_buffer(raw_data, buff_size=100000)
             self.network_thread.set_callback(self.network_callback)
         else:
             self.process_row(raw_data)
@@ -115,7 +115,11 @@ class HighCamera(Camera):
         if data == '':
             self.serial_thread.write_to_serial(cmd)
         else:
-            arguments = int_to_bytes(int(data))
+            n = int(data)
+            if n < 256:
+                arguments = int_to_bytes(0) + int_to_bytes(n)
+            else:
+                arguments = int_to_bytes(int(data))
             send = bytearray(cmd) + arguments
             # print ['{0:x}'.format(x) for x in send], int(data)
             self.serial_thread.write_to_serial(send)
