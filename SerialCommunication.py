@@ -1,3 +1,4 @@
+from Queue import Queue
 from time import sleep
 
 import serial
@@ -29,12 +30,14 @@ class SerialCommunication(Thread):
         while self.ser.is_open:
             try:
                 n_bytes = self.ser.in_waiting
+                if n_bytes == 0: continue
                 bytes_read = self.ser.read(n_bytes)
 
                 if self.get_raw_data_only:
                     data = bytes_read
                     self.process_callback(bytearray(data))
                 else:
+                    #TODO: thread this
                     data += bytes_read
                     data = self.consume_data(data)
 
@@ -51,7 +54,6 @@ class SerialCommunication(Thread):
             return data
 
         last = lines.pop()
-
         for line in lines:
             self.process_callback(bytearray(line))
         return last
