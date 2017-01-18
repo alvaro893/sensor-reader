@@ -14,8 +14,9 @@ def read_hex(data):
 
 
 class SerialCommunication(Thread):
-    def __init__(self, process_callback, port):
+    def __init__(self, process_callback, port, get_raw_data_only=False):
         Thread.__init__(self, name="SerialThread")
+        self.get_raw_data_only = get_raw_data_only
         self.lastline = b''
         self.process_callback = process_callback
         self.ser = serial.Serial(port, BAUD_SPEED)
@@ -27,13 +28,15 @@ class SerialCommunication(Thread):
         data = b''
         while self.ser.is_open:
             try:
-                bytes_to_read = self.ser.in_waiting
+                n_bytes = self.ser.in_waiting
+                bytes_read = self.ser.read(n_bytes)
 
-                # data += self.ser.read(bytes_to_read)
-                # data = self.consume_data(data)
-
-                data = self.ser.read(bytes_to_read)
-                self.process_callback(bytearray(data))
+                if self.get_raw_data_only:
+                    data = bytes_read
+                    self.process_callback(bytearray(data))
+                else:
+                    data += bytes_read
+                    data = self.consume_data(data)
 
             except serial.SerialException as e:
                 logging.error(e.message)
