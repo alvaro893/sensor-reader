@@ -117,7 +117,7 @@ class HighCamera(Camera):
         else:
             n = int(data)
             if n < 256:
-                arguments = int_to_bytes(0) + int_to_bytes(n)
+                arguments = int_to_bytes(0) + int_to_bytes(n) # most of commands expect 2 bytes, a zero is need when sending only one byte of data
             else:
                 arguments = int_to_bytes(int(data))
             send = bytearray(cmd) + arguments
@@ -143,8 +143,10 @@ class HighCamera(Camera):
         self.send_command('a')
 
     def bit_depth(self, data):
+        # bit_bepth command data only will accept one byte
         logging.warn('mode was changed to %d bit depth', int(data))
-        self.send_command('B', data)
+        send = bytearray('B' + int_to_bytes(int(data)))
+        self.serial_thread.write_to_serial(send)
 
     def delay(self, data):
         self.send_command('U', data)
