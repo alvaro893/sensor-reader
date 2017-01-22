@@ -47,6 +47,7 @@ class NetworkThread(Thread):
         if self.last_parameters != parameters:
             if hasattr(self, 'callback'):
                 self.callback(parameters)
+                clear_queue(self.queue)
 
     def run(self):
         while not self.stopped:
@@ -83,3 +84,7 @@ def post_buffer(data):
         print e.message
         parameters = {}
     return parameters
+
+
+def clear_queue(q):
+    q.queue.clear()
