@@ -1,11 +1,12 @@
 #!/usr/bin/python
 import re
+import thread
+import time
 from Queue import Queue
 from threading import Thread
 
 import websocket
-import thread
-import time
+import logging
 
 from Constants import INITIAL_SEQUENCE, WS_URL, CAMERA_PATH, CLIENT_PATH
 
@@ -15,7 +16,7 @@ url = WS_URL
 class WebSocketConnection(Thread):
     def __init__(self, url=WS_URL + CAMERA_PATH):
         Thread.__init__(self, name=WebSocketConnection.__name__)
-        websocket.enableTrace(True)
+        #websocket.enableTrace(True)
         self.url = url
         self.open_connection = True
         self.queue = Queue(2)
@@ -23,29 +24,27 @@ class WebSocketConnection(Thread):
                                          on_message=self.on_message,
                                          on_error=self.on_error,
                                          on_close=self.on_close,
-                                         on_open=self.on_open,
-                                         subprotocols=["binary", "base64"],
-                                         header={'Content-Type': 'application/octet-stream'})
+                                         on_open=self.on_open)
         self.start()
 
     def run(self):
         while self.open_connection:
             self.ws.run_forever()
-            print "try to reconnect in 5 secs"
+            logging.warn("try to reconnect in 5 secs")
             time.sleep(5)
 
     def on_message(self, ws, message):
-        print "received command:", message
+        logging.debug("received command:", message)
         self.callback(message, directly=True)
 
     def on_error(self, ws, error):
-        print error
+        logging.error(error)
 
     def on_close(self, ws):
-        print "### closed ###"
+        logging.warn("### closed ###")
 
     def on_open(self, ws):
-        print "opened new socket"
+        logging.warn("opened new socket")
 
         def run(*args):
             while self.open_connection:
@@ -81,11 +80,11 @@ class SerialThroughWebSocket(WebSocketConnection):
 
     def write_to_serial(self, data):
         """Actually this sends data to socket"""
-        print "command to send", data
+        logging.debug("command to send", data)
         self.send_to_socket(data)
 
     def _consume_data(self, data):
-        # print ' '.join(x.encode('hex') for x in data)
+        # logging.debug(' '.join(x.encode('hex') for x in data)
         machs = self.pattern.split(data)
         last_ind = len(machs) - 1
         for ind, line in enumerate(machs):

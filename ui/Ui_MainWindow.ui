@@ -161,10 +161,10 @@
       <item row="5" column="0">
        <widget class="QSpinBox" name="maxRawSpinBox">
         <property name="minimum">
-         <number>-1000</number>
+         <number>-100000</number>
         </property>
         <property name="maximum">
-         <number>1000</number>
+         <number>100000</number>
         </property>
        </widget>
       </item>
@@ -178,10 +178,10 @@
       <item row="7" column="0">
        <widget class="QSpinBox" name="minRawSpinBox">
         <property name="minimum">
-         <number>-1000</number>
+         <number>-100000</number>
         </property>
         <property name="maximum">
-         <number>1000</number>
+         <number>100000</number>
         </property>
        </widget>
       </item>
@@ -366,7 +366,7 @@
      <x>0</x>
      <y>0</y>
      <width>1128</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuPorts">
