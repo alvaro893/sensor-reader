@@ -34,6 +34,7 @@ class MyMplCanvas(FigureCanvas):
         self.figure = fig
         # We want the axes cleared every time plot() is called
         self.axes.hold(False)
+        # self.axes.axis('scaled')
 
 
         FigureCanvas.__init__(self, fig)
@@ -77,6 +78,7 @@ class MplCanvasHighCamera(MyMplCanvas):
         new_arr = self.camera.last_frame
         self.pcolorm.set_array(new_arr.ravel())
         self.pcolorm.set_clim([new_arr.min(), new_arr.max()])  # autoscale
+
         self.draw()
         mainWindow = self.window()
         telemetry = self.camera.telemetry
@@ -107,6 +109,7 @@ class MplCanvasLowCamera(MyMplCanvas):
 
         # configure row and columns of plots
         self.pcolorm = self.axes.pcolormesh(arr, cmap='rainbow')
+        self.axes.set_xlim((0, self.camera.x_lim))
         self.figure.colorbar(self.pcolorm, ax=self.axes)
 
 

@@ -4,6 +4,7 @@ from time import sleep
 import serial
 import os
 import logging
+import re
 from threading import Thread
 from Constants import INITIAL_SEQUENCE, BAUD_SPEED
 
@@ -23,23 +24,23 @@ class SerialCommunication(Thread):
         self.ser = serial.Serial(port, BAUD_SPEED)
         self.setDaemon(True)
         self.start()
+        self.pattern = re.compile(INITIAL_SEQUENCE)
         print("serial port:", port, " ", BAUD_SPEED, " ", os.name)
 
     def run(self):
-        data = b''
+        remains = b''
         while self.ser.is_open:
             try:
-                n_bytes = self.ser.in_waiting
-                if n_bytes == 0: continue
-                bytes_read = self.ser.read(n_bytes)
+                one_byte = self.ser.read(1)  # necessary to block thread (in_waiting method doesn't block)
+                n_bytes = 200
+                bytes_read = one_byte + self.ser.read(n_bytes)
 
                 if self.get_raw_data_only:
                     data = bytes_read
                     self.process_callback(bytearray(data))
                 else:
-                    #TODO: thread this
-                    data += bytes_read
-                    data = self.consume_data(data)
+                    data = remains + bytes_read
+                    remains = self.consume_data(data)
 
             except serial.SerialException as e:
                 logging.error(e.message)
@@ -49,18 +50,13 @@ class SerialCommunication(Thread):
                     break
 
     def consume_data(self, data):
-        lines = data.split(INITIAL_SEQUENCE)
-        if (len(lines) < 1):
-            return data
-
-        last = lines.pop()
-        for line in lines:
+        machs = self.pattern.split(data)
+        last_ind = len(machs) - 1
+        for ind, line in enumerate(machs):
+            if ind == last_ind: continue
             self.process_callback(bytearray(line))
-        return last
+        return machs[-1]
 
-
-    def get_line(self):
-        return bytearray(self.lastline)
 
     def start_reading(self):
         Thread.start(self)
