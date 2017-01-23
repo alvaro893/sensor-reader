@@ -41,7 +41,10 @@ class LowCamera(Camera):
         """ sends raw frame to network and call process frame """
         logging.debug(raw_frame)
         if self.only_send_data:
-            self.network_thread.add_to_buffer(raw_frame)
+            if self.use_http:
+                self.network_thread.add_to_buffer(raw_frame)
+            else:
+                self.network_thread.send_to_socket(raw_frame)
         else:
             self.last_frame = self.process_frame(raw_frame)
 

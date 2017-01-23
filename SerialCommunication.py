@@ -32,7 +32,7 @@ class SerialCommunication(Thread):
         while self.ser.is_open:
             try:
                 one_byte = self.ser.read(1)  # necessary to block thread (in_waiting method doesn't block)
-                n_bytes = 200
+                n_bytes = self.ser.in_waiting
                 bytes_read = one_byte + self.ser.read(n_bytes)
 
                 if self.get_raw_data_only:
