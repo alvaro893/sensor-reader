@@ -73,4 +73,4 @@ class LowCamera(Camera):
     def stop(self):
         self.stopped = True
         self.network_thread.stop()
-        self.serial_thread.stop_reading()
+        self.serial_thread.stop()

@@ -155,5 +155,5 @@ class HighCamera(Camera):
         self.send_command('U', data)
 
     def stop(self):
-        self.serial_thread.stop_reading()
+        self.serial_thread.stop()
         self.network_thread.stop()

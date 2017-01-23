@@ -4,7 +4,7 @@ import numpy as np
 
 from HttpConnection import NetworkThread
 from SerialCommunication import SerialCommunication
-from WebSocketConnection import WebSocketConnection
+from WebSocketConnection import WebSocketConnection, SerialThroughWebSocket
 
 
 class Camera:
@@ -25,7 +25,10 @@ class Camera:
             else:
                 self.network_thread = WebSocketConnection()
         else:
-            self.serial_thread = SerialCommunication(self.frame_callback, port)
+            if port == None:
+                self.serial_thread = SerialThroughWebSocket(self.frame_callback)
+            else:
+                self.serial_thread = SerialCommunication(self.frame_callback, port)
 
 
     def frame_callback(self, data):
@@ -33,4 +36,4 @@ class Camera:
 
     def stop(self):
         self.network_thread.stop()
-        self.serial_thread.stop_reading()
+        self.serial_thread.stop()
