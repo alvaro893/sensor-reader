@@ -19,6 +19,7 @@ class LowCamera(Camera):
     def __init__(self, *args, **kwargs):
         kwargs['y_length'] = Y_LENGTH; kwargs['x_length'] = X_LENGTH
         Camera.__init__(self,  *args, **kwargs)
+        self.x_lim = X_LENGTH
 
     def get_absolute_values(self):
         return min(raw_min), max(raw_max), np.mean(raw_mean)
