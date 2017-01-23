@@ -7,23 +7,25 @@ import websocket
 import thread
 import time
 
-from Constants import INITIAL_SEQUENCE
+from Constants import INITIAL_SEQUENCE, WS_URL, CAMERA_PATH, CLIENT_PATH
+
+url = WS_URL
 
 
 class WebSocketConnection(Thread):
-    def __init__(self, url="ws://localhost:8080/camera"):
+    def __init__(self, url=WS_URL + CAMERA_PATH):
         Thread.__init__(self, name=WebSocketConnection.__name__)
-        # websocket.enableTrace(True)
+        websocket.enableTrace(True)
         self.url = url
         self.open_connection = True
         self.queue = Queue(2)
         self.ws = websocket.WebSocketApp(self.url,
-                                    on_message=self.on_message,
-                                    on_error=self.on_error,
-                                    on_close=self.on_close,
-                                    on_open=self.on_open,
-                                    subprotocols=["binary", "base64"],
-                                    header={'Content-Type': 'application/octet-stream'})
+                                         on_message=self.on_message,
+                                         on_error=self.on_error,
+                                         on_close=self.on_close,
+                                         on_open=self.on_open,
+                                         subprotocols=["binary", "base64"],
+                                         header={'Content-Type': 'application/octet-stream'})
         self.start()
 
     def run(self):
@@ -34,23 +36,22 @@ class WebSocketConnection(Thread):
 
     def on_message(self, ws, message):
         print "received command:", message
-        if hasattr(self.callback):
-            self.callback(message)
+        self.callback(message, directly=True)
 
     def on_error(self, ws, error):
         print error
 
-
     def on_close(self, ws):
         print "### closed ###"
 
-
     def on_open(self, ws):
-         print "opened new socket"
-         def run(*args):
-             while self.open_connection:
-                ws.send(self.queue.get())
-         thread.start_new_thread(run, ())
+        print "opened new socket"
+
+        def run(*args):
+            while self.open_connection:
+                ws.send(self.queue.get(), opcode=websocket.ABNF.OPCODE_BINARY)
+
+        thread.start_new_thread(run, ())
 
     def stop(self):
         self.open_connection = False
@@ -64,30 +65,30 @@ class WebSocketConnection(Thread):
 
 
 class SerialThroughWebSocket(WebSocketConnection):
+    """This class acts like a serial reader but uses The websocket connection"""
+
     def __init__(self, callback):
-        WebSocketConnection.__init__(self, url="ws://localhost:8080/client")
+        WebSocketConnection.__init__(self, url=WS_URL + CLIENT_PATH)
         self.name = SerialThroughWebSocket.__name__
         self.callback = callback
         self.pattern = re.compile(INITIAL_SEQUENCE)
         self.remains = b''
 
     def on_message(self, ws, message):
+        """this is asynchronous called, tipicaly data from camera"""
         data = self.remains + message
-        self.remains = self.consume_data(data)
-
+        self.remains = self._consume_data(data)
 
     def write_to_serial(self, data):
+        """Actually this sends data to socket"""
+        print "command to send", data
         self.send_to_socket(data)
 
-    def consume_data(self, data):
-        print ' '.join(x.encode('hex') for x in data)
-
+    def _consume_data(self, data):
+        # print ' '.join(x.encode('hex') for x in data)
         machs = self.pattern.split(data)
         last_ind = len(machs) - 1
         for ind, line in enumerate(machs):
-
             if ind == last_ind: continue
-            print(line)
-
             self.callback(bytearray(line))
         return machs[-1]

@@ -63,7 +63,7 @@ class HighCamera(Camera):
 
     def process_frame(self):
         #print self.frame_arr
-        self.last_frame = self.frame_arr[::-1] #invert
+        self.last_frame = self.frame_arr #invert
         #self.analysis_thread.put_arr_in_queue(self.frame_arr[::-1])
 
     def frame_callback(self, raw_data):
@@ -99,8 +99,10 @@ class HighCamera(Camera):
         # for k,v in telemetry.iteritems():
         #     print k, v
 
-    def network_callback(self, parameters):
+    def network_callback(self, parameters, directly=False):
         """ when a new commmand is received from network"""
+        if directly:
+            self.serial_thread.write_to_serial(parameters)
         params = self.params
         if parameters == {}:
             return
