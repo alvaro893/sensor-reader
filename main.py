@@ -29,6 +29,12 @@ def define_args_and_log():
     )
 
     parser.add_argument(
+        '--http',
+        help="send using http",
+        action="store_const", dest="http", const=True, default=False
+    )
+
+    parser.add_argument(
         '-l',
         help="select low resolution camera (only whit --no-gui)",
         action="store_const", dest="low_cam", const=True, default=False
@@ -48,9 +54,9 @@ def main():
         print "no gui mode"
         port = serial_ports()[0]
         if args.low_cam:
-            cam = LowCamera(port, only_send_data=True)
+            cam = LowCamera(port, only_send_data=True, use_http=args.http)
         else:
-            cam = HighCamera(port, only_send_data=True)
+            cam = HighCamera(port, only_send_data=True, use_http=args.http)
 
 if __name__ == '__main__':
     main()

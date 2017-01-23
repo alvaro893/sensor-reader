@@ -4,10 +4,11 @@ import numpy as np
 
 from HttpConnection import NetworkThread
 from SerialCommunication import SerialCommunication
+from WebSocketConnection import WebSocketConnection
 
 
 class Camera:
-    def __init__(self, port, y_length=0, x_length=0, only_send_data=False):
+    def __init__(self, port, y_length=0, x_length=0, only_send_data=False, use_http=False):
         #self.frame_arr = np.zeros((y_length, x_length), dtype=np.uint8)
         self.frame_arr = np.zeros((y_length, x_length))
         self.telemetry = {}
@@ -16,9 +17,13 @@ class Camera:
         self.frame_ready = False
         self.last_frame = self.frame_arr
         self.only_send_data = only_send_data
+        self.use_http=use_http
         if(only_send_data):
             self.serial_thread = SerialCommunication(self.frame_callback, port, get_raw_data_only=True)
-            self.network_thread = NetworkThread(daemon=False)
+            if use_http:
+                self.network_thread = NetworkThread(daemon=False)
+            else:
+                self.network_thread = WebSocketConnection()
         else:
             self.serial_thread = SerialCommunication(self.frame_callback, port)
 
