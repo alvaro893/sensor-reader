@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 import sys
 
+import logging
 from matplotlib.backends import qt_compat
 
 from DetectSerialPorts import serial_ports
@@ -28,7 +29,7 @@ Ui_PortDialog, QDialog = loadUiType('ui/Ui_PortDialog.ui')
 class MyMplCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
 
-    def __init__(self, parent=None, width=5, height=4, dpi=100):
+    def __init__(self, port=None, parent=None, width=5, height=4, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
         self.figure = fig
@@ -55,6 +56,7 @@ class MplCanvasHighCamera(MyMplCanvas):
     def __init__(self,port=None, *args, **kwargs):
         MyMplCanvas.__init__(self, *args, **kwargs)
         self.camera = HighCamera(port)
+        self.figure.suptitle(port)
         arr = self.camera.last_frame
 
         # configure buttons for camera commands
@@ -84,18 +86,21 @@ class MplCanvasHighCamera(MyMplCanvas):
         telemetry = self.camera.telemetry
 
         # show telemetry
-        mainWindow.maxRawLabel.setText(str(telemetry['raw_max_set']))
-        mainWindow.minRawLabel.setText(str(telemetry['raw_min_set']))
-        mainWindow.bitDepthLabel.setText(chr(telemetry['bit_depth']))
-        mainWindow.delayLabel.setText(str(telemetry['frame_delay']))
-        mainWindow.timeCounterLabel.setText(str(telemetry['time_counter']))
-        mainWindow.frameCounterLabel.setText(str(telemetry['frame_counter']))
-        mainWindow.frameMeanLabel.setText(str(telemetry['frame_mean']))
-        mainWindow.maxTempLabel.setText(str(telemetry['raw_max']))
-        mainWindow.minTempLabel.setText(str(telemetry['raw_min']))
-        mainWindow.discardPacketsLabel.setText(str(telemetry['discard_packets_count']))
-        mainWindow.agcLabel.setText(str(telemetry['agc']))
-        mainWindow.fpaTempLabel.setText(str(telemetry['fpa_temp']))
+        try:
+            mainWindow.maxRawLabel.setText(str(telemetry['raw_max_set']))
+            mainWindow.minRawLabel.setText(str(telemetry['raw_min_set']))
+            mainWindow.bitDepthLabel.setText(chr(telemetry['bit_depth']))
+            mainWindow.delayLabel.setText(str(telemetry['frame_delay']))
+            mainWindow.timeCounterLabel.setText(str(telemetry['time_counter']))
+            mainWindow.frameCounterLabel.setText(str(telemetry['frame_counter']))
+            mainWindow.frameMeanLabel.setText(str(telemetry['frame_mean']))
+            mainWindow.maxTempLabel.setText(str(telemetry['raw_max']))
+            mainWindow.minTempLabel.setText(str(telemetry['raw_min']))
+            mainWindow.discardPacketsLabel.setText(str(telemetry['discard_packets_count']))
+            mainWindow.agcLabel.setText(str(telemetry['agc']))
+            mainWindow.fpaTempLabel.setText(str(telemetry['fpa_temp']))
+        except KeyError as e:
+            logging.error(e.message)
 
     def close_camera(self):
         self.camera.stop()
@@ -172,6 +177,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         if dialog.was_accepted:
             current_port = str(dialog.listWidget.currentItem().text())
+            self.current_port = current_port
             if current_port == netItem: current_port = None
 
             if dialog.radioButtonLow.isChecked():
@@ -188,6 +194,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.camera_canvas.append(canvas)
         self.l.addWidget(canvas)
         self.camera_canvas.append(canvas)
+        canvas.figure.suptitle(self.current_port)
 
     def fileQuit(self):
         self.close()
