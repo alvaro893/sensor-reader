@@ -50,12 +50,12 @@ class HighCamera(Camera):
 
         if n_row < Y_LENGTH:  # normal row
             try:
-                for indx, val in enumerate(row[1:-3]):
+                for indx, val in enumerate(row[1:]):
                     f_row = (n_row)/2
                     f_col = (n_row) % 2 * 80 + indx
                     self.frame_arr[f_row][f_col] = val
 
-            except ValueError as e:
+            except ValueError and IndexError as e:
                 logging.warn("row size is not suitable: %s", e.message)
         else:  # telemetry row
             self.process_telemetry(row)
