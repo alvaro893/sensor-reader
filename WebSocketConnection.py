@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import re
 from Queue import Queue
 from threading import Thread
 
@@ -6,17 +7,23 @@ import websocket
 import thread
 import time
 
+from Constants import INITIAL_SEQUENCE
+
+
 class WebSocketConnection(Thread):
-    def __init__(self):
+    def __init__(self, url="ws://localhost:8080/camera"):
         Thread.__init__(self, name=WebSocketConnection.__name__)
         # websocket.enableTrace(True)
+        self.url = url
         self.open_connection = True
         self.queue = Queue(2)
-        self.ws = websocket.WebSocketApp("ws://localhost:8080/camera",
+        self.ws = websocket.WebSocketApp(self.url,
                                     on_message=self.on_message,
                                     on_error=self.on_error,
                                     on_close=self.on_close,
-                                    on_open=self.on_open)
+                                    on_open=self.on_open,
+                                    subprotocols=["binary", "base64"],
+                                    header={'Content-Type': 'application/octet-stream'})
         self.start()
 
     def run(self):
@@ -39,7 +46,7 @@ class WebSocketConnection(Thread):
 
 
     def on_open(self, ws):
-         print "opened"
+         print "opened new socket"
          def run(*args):
              while self.open_connection:
                 ws.send(self.queue.get())
@@ -55,8 +62,32 @@ class WebSocketConnection(Thread):
         if len(data) != 0:
             self.queue.put(data)
 
-# ws = WebSocketConnection()
-# while True:
-#     print(ws.queue.qsize())
-#     ws.queue.put(b'\xff\x56\x67')
-#     time.sleep(1)
+
+class SerialThroughWebSocket(WebSocketConnection):
+    def __init__(self, callback):
+        WebSocketConnection.__init__(self, url="ws://localhost:8080/client")
+        self.name = SerialThroughWebSocket.__name__
+        self.callback = callback
+        self.pattern = re.compile(INITIAL_SEQUENCE)
+        self.remains = b''
+
+    def on_message(self, ws, message):
+        data = self.remains + message
+        self.remains = self.consume_data(data)
+
+
+    def write_to_serial(self, data):
+        self.send_to_socket(data)
+
+    def consume_data(self, data):
+        print ' '.join(x.encode('hex') for x in data)
+
+        machs = self.pattern.split(data)
+        last_ind = len(machs) - 1
+        for ind, line in enumerate(machs):
+
+            if ind == last_ind: continue
+            print(line)
+
+            self.callback(bytearray(line))
+        return machs[-1]

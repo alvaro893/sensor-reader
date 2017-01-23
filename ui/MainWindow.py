@@ -164,12 +164,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.statusBar().showMessage("Alvaro", 2000)
 
     def addCamera(self):
+        netItem = "From network (WebSocket)"
         dialog = PortDialog()
         dialog.buttonBox.accepted.connect(dialog.accept)
+        dialog.listWidget.addItem(netItem)
         dialog.exec_()
 
         if dialog.was_accepted:
             current_port = str(dialog.listWidget.currentItem().text())
+            if current_port == netItem: current_port = None
+
             if dialog.radioButtonLow.isChecked():
                 self.createCamera(current_port, style='low')
             if dialog.radioButtonHigh.isChecked():

@@ -65,6 +65,6 @@ class SerialCommunication(Thread):
         if self.ser.is_open:
             self.ser.write(text)
 
-    def stop_reading(self):
+    def stop(self):
         if self.ser.is_open:
             self.ser.close()
