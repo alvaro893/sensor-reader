@@ -57,7 +57,7 @@ class SerialCommunication(Thread):
         last_ind = len(machs) - 1
         for ind, line in enumerate(machs):
             if ind == last_ind: continue
-            thread.start_new(self.process_callback, ((line),) )
+            self.process_callback(bytearray(line))
         return machs[-1]
 
 
