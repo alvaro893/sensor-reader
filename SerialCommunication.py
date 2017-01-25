@@ -6,6 +6,9 @@ import os
 import logging
 import re
 from threading import Thread
+
+import thread
+
 from Constants import INITIAL_SEQUENCE, BAUD_SPEED
 
 __author__ = 'Alvaro'
@@ -54,7 +57,7 @@ class SerialCommunication(Thread):
         last_ind = len(machs) - 1
         for ind, line in enumerate(machs):
             if ind == last_ind: continue
-            self.process_callback(bytearray(line))
+            thread.start_new(self.process_callback, ((line),) )
         return machs[-1]
 
 

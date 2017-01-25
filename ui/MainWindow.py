@@ -2,6 +2,8 @@ from __future__ import unicode_literals
 import sys
 
 import logging
+
+import datetime
 from matplotlib.backends import qt_compat
 
 from DetectSerialPorts import serial_ports
@@ -89,9 +91,9 @@ class MplCanvasHighCamera(MyMplCanvas):
         try:
             mainWindow.maxRawLabel.setText(str(telemetry['raw_max_set']))
             mainWindow.minRawLabel.setText(str(telemetry['raw_min_set']))
-            mainWindow.bitDepthLabel.setText(chr(telemetry['bit_depth']))
+            mainWindow.bitDepthLabel.setText(str(telemetry['bit_depth']))
             mainWindow.delayLabel.setText(str(telemetry['frame_delay']))
-            mainWindow.timeCounterLabel.setText(str(telemetry['time_counter']))
+            mainWindow.timeCounterLabel.setText(str(datetime.timedelta(seconds=telemetry['time_counter']/1000)))
             mainWindow.frameCounterLabel.setText(str(telemetry['frame_counter']))
             mainWindow.frameMeanLabel.setText(str(telemetry['frame_mean']))
             mainWindow.maxTempLabel.setText(str(telemetry['raw_max']))
