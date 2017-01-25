@@ -82,7 +82,7 @@ class HighCamera(Camera):
         if (len(data) < 40):
             return
         telemetry = {}
-        telemetry['time_counter'] =           from_bytes_to_int( data[4:6] + data[1:3])
+        telemetry['time_counter'] =           from_bytes_to_int( data[5:3:-1] + data[2:0:-1])
         telemetry['frame_counter'] =          from_bytes_to_int( data[10:12] + data[7:9] )
         telemetry['frame_mean'] =             from_bytes_to_int( data[13:15] )
         telemetry['fpa_temp'] =               from_bytes_to_int( data[16:18] )
@@ -91,9 +91,9 @@ class HighCamera(Camera):
         telemetry['discard_packets_count'] =  from_bytes_to_int( data[24:26] )
         telemetry['raw_max_set'] =            from_bytes_to_int( data[27:29] )
         telemetry['raw_min_set'] =            from_bytes_to_int( data[30:32] )
-        telemetry['agc'] =                    from_bytes_to_int( data[33] )
-        telemetry['bit_depth'] =              from_bytes_to_int( data[34] )
-        telemetry['frame_delay'] =            from_bytes_to_int( data[36:38] )
+        telemetry['agc'] =                    '{:02d}'.format( data[34] )
+        telemetry['bit_depth'] =              '{:01d} bits'.format( data[35] )
+        telemetry['frame_delay'] =            from_bytes_to_int( data[38:36:-1] )
 
         self.telemetry = telemetry
         # for k,v in telemetry.iteritems():
