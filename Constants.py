@@ -13,7 +13,7 @@ CAMERA_PATH = "/camera"
 CLIENT_PATH = "/client"
 PASS = '0'
 try:
-    with open(".envd.json") as file:
+    with open(".env.json") as file:
         data = json.load(file)
         PASS = data["WS_PASSWORD"]
 except Exception:
