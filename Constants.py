@@ -1,14 +1,25 @@
+import json
+
+import logging
 
 AUTHOR = 'Alvaro'
 __author__ = AUTHOR
 
 # URL = "https://ir-sensor-cloud.appspot.com/"
 URL = "http://server-ir-cloud.44fs.preview.openshiftapps.com/"
-URL_DEBUG = "http://localhost:5000"
-WS_URL = "ws://cloudwebsocket-ir-cloud.44fs.preview.openshiftapps.com"
+URL_DEBUG = "ws://localhost:8080"
+WS_URL = "ws://cloudwebsocket-ir-cloud.espoo-apps.ilab.cloud"
 CAMERA_PATH = "/camera"
 CLIENT_PATH = "/client"
-KEY = "development_server"
+PASS = '0'
+try:
+    with open(".envd.json") as file:
+        data = json.load(file)
+        PASS = data["WS_PASSWORD"]
+except Exception:
+    logging.error("no .env file")
+
+PARAMETERS = "?pass=%s" % PASS
 
 PORT_LINUX = '/dev/ttyACM0', '/dev/ttyACM1'
 PORT_WINDOWS = 'COM4', 'COM5'
