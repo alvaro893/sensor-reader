@@ -8,13 +8,13 @@ from threading import Thread
 import websocket
 import logging
 
-from Constants import INITIAL_SEQUENCE, WS_URL, CAMERA_PATH, CLIENT_PATH
+from Constants import INITIAL_SEQUENCE, WS_URL, CAMERA_PATH, CLIENT_PATH, PARAMETERS
 
 url = WS_URL
 
 
 class WebSocketConnection(Thread):
-    def __init__(self, url=WS_URL + CAMERA_PATH):
+    def __init__(self, url=WS_URL + CAMERA_PATH + PARAMETERS):
         Thread.__init__(self, name=WebSocketConnection.__name__)
         #websocket.enableTrace(True)
         self.url = url
@@ -67,7 +67,7 @@ class SerialThroughWebSocket(WebSocketConnection):
     """This class acts like a serial reader but uses The websocket connection"""
 
     def __init__(self, callback):
-        WebSocketConnection.__init__(self, url=WS_URL + CLIENT_PATH)
+        WebSocketConnection.__init__(self, url=WS_URL + CLIENT_PATH + PARAMETERS)
         self.name = SerialThroughWebSocket.__name__
         self.callback = callback
         self.pattern = re.compile(INITIAL_SEQUENCE)
