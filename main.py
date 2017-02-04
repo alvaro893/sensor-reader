@@ -1,10 +1,10 @@
 import argparse
 import logging
+from time import sleep
 
 from DetectSerialPorts import serial_ports
-from HighCamera import HighCamera
-from lowCamera import LowCamera
-from ui.MainWindow import run_ui
+from SerialCommunication import SerialCommunication
+from WebSocketConnection import WebSocketConnection
 
 __author__ = 'Alvaro'
 
@@ -22,23 +22,7 @@ def define_args_and_log():
         help="Be verbose",
         action="store_const", dest="loglevel", const=logging.INFO,
     )
-    parser.add_argument(
-        '-n', '--no-gui',
-        help="only send data to cloud",
-        action="store_const", dest="gui", const=False, default=True
-    )
 
-    parser.add_argument(
-        '--http',
-        help="send using http",
-        action="store_const", dest="http", const=True, default=False
-    )
-
-    parser.add_argument(
-        '-l',
-        help="select low resolution camera (only whit --no-gui)",
-        action="store_const", dest="low_cam", const=True, default=False
-    )
     args = parser.parse_args()
     FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
     logging.basicConfig(format=FORMAT, level=args.loglevel)
@@ -48,15 +32,17 @@ def define_args_and_log():
 
 def main():
     args = define_args_and_log()
-    if args.gui:
-        run_ui()
-    else:
-        print "no gui mode"
-        port = serial_ports()[0]
-        if args.low_cam:
-            cam = LowCamera(port, only_send_data=True, use_http=args.http)
-        else:
-            cam = HighCamera(port, only_send_data=True, use_http=args.http)
+    print "no gui mode"
+    port = serial_ports()[0]
+
+    websocket = WebSocketConnection()
+    serial = SerialCommunication(websocket.send_to_socket, port, get_raw_data_only=True)
+    websocket.set_callback(serial.write_to_serial)
+
+    while True:
+       sleep(1000) # block this thread
+
+
 
 if __name__ == '__main__':
     main()

@@ -1,6 +1,3 @@
-from Queue import Queue
-from time import sleep
-
 import serial
 import os
 import logging

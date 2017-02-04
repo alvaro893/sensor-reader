@@ -18,6 +18,7 @@ class WebSocketConnection(Thread):
         Thread.__init__(self, name=WebSocketConnection.__name__)
         #websocket.enableTrace(True)
         self.url = url
+        self.setDaemon(True)
         self.open_connection = True
         self.queue = Queue(2)
         self.ws = websocket.WebSocketApp(self.url,
