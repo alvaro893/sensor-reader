@@ -4,19 +4,14 @@ import sys
 import logging
 
 import datetime
-from matplotlib.backends import qt_compat
 
 from DetectSerialPorts import serial_ports
 from HighCamera import HighCamera
 from lowCamera import LowCamera
 
-use_pyside = qt_compat.QT_API == qt_compat.QT_API_PYSIDE
-if use_pyside:
-    from PySide import QtGui, QtCore
-else:
-    from PyQt4 import QtGui, QtCore
-    from PyQt4.uic import loadUiType
-    from matplotlib.figure import Figure
+
+from PyQt4 import QtGui, QtCore
+from PyQt4.uic import loadUiType
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -139,6 +134,8 @@ class PortDialog(QDialog, Ui_PortDialog):
         self.setupUi(self)
         ports = serial_ports()
         self.listWidget.addItems(ports)
+        self.hNetItem = "High Camera From network (WebSocket)"
+        self.listWidget.addItem(self.hNetItem)
         self.listWidget.setCurrentRow(0)
         self.was_accepted = False
         self.radioButtonHigh.setChecked(True)
@@ -171,21 +168,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.statusBar().showMessage("Alvaro", 2000)
 
     def addCamera(self):
-        netItem = "From network (WebSocket)"
         dialog = PortDialog()
         dialog.buttonBox.accepted.connect(dialog.accept)
-        dialog.listWidget.addItem(netItem)
         dialog.exec_()
 
         if dialog.was_accepted:
-            current_port = str(dialog.listWidget.currentItem().text())
-            self.current_port = current_port
-            if current_port == netItem: current_port = None
+            port = str(dialog.listWidget.currentItem().text())
+            self.current_port = port
+            if port == dialog.hNetItem: port = None
 
             if dialog.radioButtonLow.isChecked():
-                self.createCamera(current_port, style='low')
+                self.createCamera(port, style='low')
             if dialog.radioButtonHigh.isChecked():
-                self.createCamera(current_port, style='hi')
+                self.createCamera(port, style='hi')
 
     def createCamera(self, port, style='hi'):
         if(style == 'hi'):
