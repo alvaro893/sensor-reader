@@ -80,7 +80,7 @@ class SerialThroughWebSocket(WebSocketConnection):
 
     def write_to_serial(self, data):
         """Actually this sends data to socket"""
-        logging.debug("command to send", data)
+        logging.warn("sending: %d B", len(data))
         self.send_to_socket(data)
 
     def _consume_data(self, data):
