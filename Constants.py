@@ -17,7 +17,8 @@ try:
         data = json.load(file)
         PASS = data["WS_PASSWORD"]
 except Exception:
-    logging.error("no .env file")
+    logging.error("no .env.json file or no WS_PASSWORD key set in")
+    exit(1)
 
 PARAMETERS = "?pass=%s" % PASS
 
