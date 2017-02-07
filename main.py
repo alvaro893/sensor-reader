@@ -1,6 +1,5 @@
 import argparse
 import logging
-from time import sleep
 
 from DetectSerialPorts import serial_ports
 from SerialCommunication import SerialCommunication
@@ -39,9 +38,13 @@ def main():
     serial = SerialCommunication(websocket.send_to_socket, port, get_raw_data_only=True)
     websocket.set_callback(serial.write_to_serial)
 
-    while True:
-       sleep(1000) # block this thread
+    try:
+        while(serial.isAlive()):
+            serial.join(1) #blocks main thread
+    except (KeyboardInterrupt, SystemExit):
+        pass
 
+    exit(1)  # exit with error
 
 
 if __name__ == '__main__':

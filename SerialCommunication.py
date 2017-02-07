@@ -4,7 +4,6 @@ import logging
 import re
 from threading import Thread
 
-import thread
 
 from Constants import INITIAL_SEQUENCE, BAUD_SPEED
 
@@ -44,10 +43,7 @@ class SerialCommunication(Thread):
 
             except serial.SerialException as e:
                 logging.error(e.message)
-                if len(data) > 0:
-                    pass
-                else:
-                    break
+                break
 
     def consume_data(self, data):
         machs = self.pattern.split(data)
