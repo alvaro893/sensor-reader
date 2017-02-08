@@ -36,7 +36,7 @@ class WebSocketConnection(Thread):
 
     def on_message(self, ws, message):
         #logging.debug("received command:", message)
-        self.callback(message, directly=True)
+        self.callback(message)
 
     def on_error(self, ws, error):
         logging.error(error)
