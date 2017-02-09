@@ -5,7 +5,7 @@ import logging
 
 import datetime
 
-from DetectSerialPorts import serial_ports
+from Utils import serial_ports
 from HighCamera import HighCamera
 from lowCamera import LowCamera
 

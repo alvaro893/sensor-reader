@@ -1,10 +1,6 @@
 import logging
-import numpy as np
-from time import sleep
 
-from Analisys import AsyncAnalysis
 from Camera import Camera
-from SerialCommunication import SerialCommunication
 from Utils import int_to_bytes, from_bytes_to_int
 
 """
@@ -155,7 +151,3 @@ class HighCamera(Camera):
 
     def delay(self, data):
         self.send_command('U', data)
-
-    def stop(self):
-        self.serial_thread.stop()
-        self.network_thread.stop()

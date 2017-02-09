@@ -1,13 +1,9 @@
-from Queue import Queue
-from time import sleep
-
-import serial
-import os
 import logging
+import os
 import re
 from threading import Thread
 
-import thread
+import serial
 
 from Constants import INITIAL_SEQUENCE, BAUD_SPEED
 
