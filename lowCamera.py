@@ -69,8 +69,3 @@ class LowCamera(Camera):
                 temp = self.get_actual_temperature(bytes_matrix[j][i], arr_max, arr_min, sensor_number)
                 self.frame_arr[y_coord][i] = temp
         return self.frame_arr
-
-    def stop(self):
-        self.stopped = True
-        self.network_thread.stop()
-        self.serial_thread.stop()

@@ -1,8 +1,6 @@
 import logging
-
 import numpy as np
 
-from HttpConnection import NetworkThread
 from SerialCommunication import SerialCommunication
 from WebSocketConnection import WebSocketConnection, SerialThroughWebSocket
 
@@ -20,10 +18,7 @@ class Camera:
         self.use_http=use_http
         if(only_send_data):
             self.serial_thread = SerialCommunication(self.frame_callback, port, get_raw_data_only=True)
-            if use_http:
-                self.network_thread = NetworkThread(daemon=False)
-            else:
-                self.network_thread = WebSocketConnection()
+            self.network_thread = WebSocketConnection()
         else:
             if port == None:
                 self.serial_thread = SerialThroughWebSocket(self.frame_callback)
@@ -35,5 +30,9 @@ class Camera:
         raise RuntimeError('frame_callback not implemented')
 
     def stop(self):
-        self.network_thread.stop()
-        self.serial_thread.stop()
+        self.stopped = True
+        try:
+            self.network_thread.stop()
+            self.serial_thread.stop()
+        except AttributeError as e:
+            logging.error(e)

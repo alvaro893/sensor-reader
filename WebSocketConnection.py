@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import logging
 import re
 import thread
 import time
@@ -6,7 +7,6 @@ from Queue import Queue
 from threading import Thread
 
 import websocket
-import logging
 
 from Constants import INITIAL_SEQUENCE, WS_URL, CAMERA_PATH, CLIENT_PATH, PARAMETERS
 
@@ -18,7 +18,7 @@ class WebSocketConnection(Thread):
         Thread.__init__(self, name=WebSocketConnection.__name__)
         #websocket.enableTrace(True)
         self.url = url
-        self.open_connection = True
+        self.is_open = True
         self.queue = Queue(2)
         self.ws = websocket.WebSocketApp(self.url,
                                          on_message=self.on_message,
@@ -28,7 +28,7 @@ class WebSocketConnection(Thread):
         self.start()
 
     def run(self):
-        while self.open_connection:
+        while self.is_open:
             self.ws.run_forever()
             logging.warn("try to reconnect in 5 secs")
             time.sleep(5)
@@ -47,13 +47,13 @@ class WebSocketConnection(Thread):
         logging.warn("opened new socket")
 
         def run(*args):
-            while self.open_connection:
+            while self.is_open:
                 ws.send(self.queue.get(), opcode=websocket.ABNF.OPCODE_BINARY)
 
         thread.start_new_thread(run, ())
 
     def stop(self):
-        self.open_connection = False
+        self.is_open = False
 
     def set_callback(self, callback):
         self.callback = callback
