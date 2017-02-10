@@ -1,6 +1,6 @@
 import logging
 import os
-import re
+import threading
 from threading import Thread
 
 import serial
@@ -23,7 +23,6 @@ class SerialCommunication(Thread):
         self.ser = serial.Serial(port, BAUD_SPEED)
         self.setDaemon(True)
         self.start()
-        self.pattern = re.compile(INITIAL_SEQUENCE)
         print("serial port:", port, " ", BAUD_SPEED, " ", os.name)
 
     def run(self):
@@ -49,11 +48,13 @@ class SerialCommunication(Thread):
                     break
 
     def consume_data(self, data):
-        machs = self.pattern.split(data)
-        last_ind = len(machs) - 1
-        for ind, line in enumerate(machs):
-            if ind == last_ind: continue
-            self.process_callback(bytearray(line))
+        machs = data.split(INITIAL_SEQUENCE)
+        def run():
+            last_ind = len(machs) - 1
+            for ind, line in enumerate(machs):
+                if ind == last_ind: continue
+                self.process_callback(bytearray(line))
+        threading._start_new_thread(run, ())
         return machs[-1]
 
 

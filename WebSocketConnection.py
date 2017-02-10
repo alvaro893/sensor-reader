@@ -20,6 +20,7 @@ class WebSocketConnection(Thread):
         self.url = url
         self.is_open = True
         self.queue = Queue(2)
+        self.setDaemon(True)
         self.ws = websocket.WebSocketApp(self.url,
                                          on_message=self.on_message,
                                          on_error=self.on_error,
@@ -54,6 +55,7 @@ class WebSocketConnection(Thread):
 
     def stop(self):
         self.is_open = False
+        self.ws.close()
 
     def set_callback(self, callback):
         self.callback = callback
