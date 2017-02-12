@@ -3,7 +3,7 @@ import argparse
 import logging
 
 from DetectSerialPorts import serial_ports
-from SerialCommunication import SerialCommunication
+from Serial_reader import Serial_reader
 from WebSocketConnection import WebSocketConnection
 
 __author__ = 'Alvaro'
@@ -36,8 +36,8 @@ def main():
     port = serial_ports()[0]
 
     websocket = WebSocketConnection()
-    serial = SerialCommunication(websocket.send_to_socket, port, get_raw_data_only=True)
-    websocket.set_callback(serial.write_to_serial)
+    serial = Serial_reader(websocket.send_to_socket, port)
+    websocket.set_callback(serial.write)
 
     try:
         while(serial.isAlive()):

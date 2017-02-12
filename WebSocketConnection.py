@@ -35,7 +35,7 @@ class WebSocketConnection(Thread):
             time.sleep(5)
 
     def on_message(self, ws, message):
-        #logging.debug("received command:", message)
+        logging.warn("received command:%s", message)
         self.callback(message)
 
     def on_error(self, ws, error):
@@ -81,7 +81,7 @@ class SerialThroughWebSocket(WebSocketConnection):
 
     def write_to_serial(self, data):
         """Actually this sends data to socket"""
-        logging.debug("command to send", data)
+        logging.debug("data to send:" + data)
         self.send_to_socket(data)
 
     def _consume_data(self, data):
