@@ -2,6 +2,8 @@
 import argparse
 import logging
 
+import time
+
 from DetectSerialPorts import serial_ports
 from Serial_reader import Serial_reader
 from WebSocketConnection import WebSocketConnection
@@ -36,10 +38,13 @@ def main():
     port = serial_ports()[0]
 
     websocket = WebSocketConnection()
-    serial = Serial_reader(websocket.send_to_socket, port)
+    serial = Serial_reader(websocket.send_data, port)
     websocket.set_callback(serial.write)
 
-    websocket.ws.run_forever()
+    while(True):
+        websocket.ws.run_forever()
+        logging.warn("try to reconnect in 5")
+        time.sleep(5)
 
     exit(1)  # exit with error
 
