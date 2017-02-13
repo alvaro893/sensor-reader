@@ -13,26 +13,18 @@ from Constants import INITIAL_SEQUENCE, WS_URL, CAMERA_PATH, CLIENT_PATH, PARAME
 url = WS_URL
 
 
-class WebSocketConnection(Thread):
+class WebSocketConnection():
     def __init__(self, url=WS_URL + CAMERA_PATH + PARAMETERS):
-        Thread.__init__(self, name=WebSocketConnection.__name__)
         #websocket.enableTrace(True)
         self.url = url
-        self.setDaemon(True)
         self.open_connection = True
-        self.queue = Queue(2)
+        self.queue = Queue(5)
         self.ws = websocket.WebSocketApp(self.url,
                                          on_message=self.on_message,
                                          on_error=self.on_error,
                                          on_close=self.on_close,
                                          on_open=self.on_open)
-        self.start()
 
-    def run(self):
-        while self.open_connection:
-            self.ws.run_forever()
-            logging.warn("try to reconnect in 5 secs")
-            time.sleep(5)
 
     def on_message(self, ws, message):
         logging.warn("received command:%s", message)
@@ -62,33 +54,3 @@ class WebSocketConnection(Thread):
     def send_to_socket(self, data):
         if len(data) != 0:
             self.queue.put(data)
-
-
-class SerialThroughWebSocket(WebSocketConnection):
-    """This class acts like a serial reader but uses The websocket connection"""
-
-    def __init__(self, callback):
-        WebSocketConnection.__init__(self, url=WS_URL + CLIENT_PATH + PARAMETERS)
-        self.name = SerialThroughWebSocket.__name__
-        self.callback = callback
-        self.pattern = re.compile(INITIAL_SEQUENCE)
-        self.remains = b''
-
-    def on_message(self, ws, message):
-        """this is asynchronous called, tipicaly data from camera"""
-        data = self.remains + message
-        self.remains = self._consume_data(data)
-
-    def write_to_serial(self, data):
-        """Actually this sends data to socket"""
-        logging.debug("data to send:" + data)
-        self.send_to_socket(data)
-
-    def _consume_data(self, data):
-        # logging.debug(' '.join(x.encode('hex') for x in data)
-        machs = self.pattern.split(data)
-        last_ind = len(machs) - 1
-        for ind, line in enumerate(machs):
-            if ind == last_ind: continue
-            self.callback(bytearray(line))
-        return machs[-1]

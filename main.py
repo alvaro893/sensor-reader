@@ -39,11 +39,7 @@ def main():
     serial = Serial_reader(websocket.send_to_socket, port)
     websocket.set_callback(serial.write)
 
-    try:
-        while(serial.isAlive()):
-            serial.join(1) #blocks main thread
-    except (KeyboardInterrupt, SystemExit):
-        pass
+    websocket.ws.run_forever()
 
     exit(1)  # exit with error
 
