@@ -24,7 +24,7 @@ class Serial_reader(Serial, Thread):
         while self.is_open:
             try:
                 data = self._get_data()
-                thread.start_new_thread(self.callback, (data,))
+                self.callback(data)
             except SerialException as e:
                 logging.error(e.message)
                 break
