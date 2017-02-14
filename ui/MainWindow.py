@@ -70,15 +70,20 @@ class MplCanvasHighCamera(MyMplCanvas):
 
 
         # configure row and columns of plots
-        self.pcolorm = self.axes.pcolormesh(arr, cmap='rainbow')
-        self.figure.colorbar(self.pcolorm, ax=self.axes)
+        self.image = self.axes.imshow(arr,
+                                      interpolation="bilinear",
+                                      clim=[arr.min(), arr.max()],
+                                      cmap="CMRmap",
+                                      origin='lower')
+
+        self.figure.colorbar(self.image, ax=self.axes)
 
     def update_figure(self):
         new_arr = self.camera.last_frame
-        self.pcolorm.set_array(new_arr.ravel())
-        self.pcolorm.set_clim([new_arr.min(), new_arr.max()])  # autoscale
-
+        self.image.set_array(new_arr)
+        self.image.set_clim([new_arr.min(), new_arr.max()])  # autoscale
         self.draw()
+
         mainWindow = self.window()
         telemetry = self.camera.telemetry
 
@@ -110,15 +115,20 @@ class MplCanvasLowCamera(MyMplCanvas):
 
 
         # configure row and columns of plots
-        self.pcolorm = self.axes.pcolormesh(arr, cmap='rainbow')
+        self.image = self.axes.imshow(arr,
+                                      interpolation="bilinear",
+                                      clim=[arr.min(), arr.max()],
+                                      cmap="rainbow",
+                                      origin='lower')
+
+        self.figure.colorbar(self.image, ax=self.axes)
         self.axes.set_xlim((0, self.camera.x_lim))
-        self.figure.colorbar(self.pcolorm, ax=self.axes)
 
 
     def update_figure(self):
         new_arr = self.camera.last_frame
-        self.pcolorm.set_array(new_arr.ravel())
-        self.pcolorm.set_clim([new_arr.min(), new_arr.max()]) #autoscale
+        self.image.set_array(new_arr)
+        self.image.set_clim([new_arr.min(), new_arr.max()])  # autoscale
         self.draw()
         amin, amax, amean =  ("%.2f" % i for i in self.camera.get_absolute_values())
         self.window().maxTempLabel.setText(str(amax))
