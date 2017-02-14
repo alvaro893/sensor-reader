@@ -49,12 +49,10 @@ class SerialCommunication(Thread):
 
     def consume_data(self, data):
         machs = data.split(INITIAL_SEQUENCE)
-        def run():
-            last_ind = len(machs) - 1
-            for ind, line in enumerate(machs):
-                if ind == last_ind: continue
-                self.process_callback(bytearray(line))
-        threading._start_new_thread(run, ())
+        last_ind = len(machs) - 1
+        for ind, line in enumerate(machs):
+            if ind == last_ind: continue
+            self.process_callback(bytearray(line))
         return machs[-1]
 
 

@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 
 from Camera import Camera
 from Utils import int_to_bytes, from_bytes_to_int
@@ -59,7 +60,8 @@ class HighCamera(Camera):
 
     def process_frame(self):
         #print self.frame_arr
-        self.last_frame = self.frame_arr #invert
+        self.last_frame = self.frame_arr
+        self.frame_arr = np.zeros((Y_LENGTH_IMAGE, X_LENGTH_IMAGE))
         #self.analysis_thread.put_arr_in_queue(self.frame_arr[::-1])
 
     def frame_callback(self, raw_data):

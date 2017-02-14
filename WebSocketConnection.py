@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import logging
-import re
 import thread
+import threading
 import time
 from Queue import Queue
 from threading import Thread
@@ -72,7 +72,6 @@ class SerialThroughWebSocket(WebSocketConnection):
         WebSocketConnection.__init__(self, url=WS_URL + CLIENT_PATH + PARAMETERS)
         self.name = SerialThroughWebSocket.__name__
         self.callback = callback
-        self.pattern = re.compile(INITIAL_SEQUENCE)
         self.remains = b''
 
     def on_message(self, ws, message):
@@ -87,7 +86,7 @@ class SerialThroughWebSocket(WebSocketConnection):
 
     def _consume_data(self, data):
         # logging.debug(' '.join(x.encode('hex') for x in data)
-        machs = self.pattern.split(data)
+        machs = data.split(INITIAL_SEQUENCE)
         last_ind = len(machs) - 1
         for ind, line in enumerate(machs):
             if ind == last_ind: continue
