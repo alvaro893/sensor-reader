@@ -30,6 +30,7 @@ class MyMplCanvas(FigureCanvas):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
         self.figure = fig
+        self.camera = None
         # We want the axes cleared every time plot() is called
         self.axes.hold(False)
         # self.axes.axis('scaled')
@@ -45,6 +46,10 @@ class MyMplCanvas(FigureCanvas):
         timer = QtCore.QTimer(self)
         timer.timeout.connect(self.update_figure)
         timer.start(100)
+
+    def delete(self):
+        self.camera.stop()
+        self.deleteLater()
 
 
 
@@ -104,8 +109,6 @@ class MplCanvasHighCamera(MyMplCanvas):
         except KeyError as e:
             logging.error(e.message)
 
-    def close_camera(self):
-        self.camera.stop()
 
 class MplCanvasLowCamera(MyMplCanvas):
     def __init__(self, port=None, *args, **kwargs):
@@ -135,8 +138,7 @@ class MplCanvasLowCamera(MyMplCanvas):
         self.window().minTempLabel.setText(str(amin))
         self.window().meanTempLabel.setText(str(amean))
 
-    def close_camera(self):
-        self.camera.stop()
+
 
 class PortDialog(QDialog, Ui_PortDialog):
     def __init__(self,):
@@ -168,6 +170,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.l = self.plotLayout
         self.camera_canvas = []
         self.addCameraButton.clicked.connect(self.addCamera)
+        self.deleteButton.clicked.connect(self.deleteCameras)
 
         # color = MplCanvasHighCamera(parent=self.main_widget, width=5, height=4, dpi=100, port=serial_ports()[0])
         # self.camera_canvas.append(color)
@@ -176,6 +179,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.main_widget.setFocus()
         #self.setCentralWidget(self.main_widget)
         self.statusBar().showMessage("Alvaro", 2000)
+
+    def deleteCameras(self):
+        canvas = self.camera_canvas.pop()
+        canvas.delete()
+        self.l.removeWidget(canvas)
+
 
     def addCamera(self):
         dialog = PortDialog()
@@ -206,7 +215,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def fileQuit(self):
         self.close()
         for canvas in self.camera_canvas:
-            canvas.close_camera()
+            canvas.delete()
 
     def closeEvent(self, ce):
         self.fileQuit()

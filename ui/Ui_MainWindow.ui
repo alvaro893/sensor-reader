@@ -18,17 +18,7 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_2">
-    <item row="0" column="0">
-     <layout class="QVBoxLayout" name="plotLayout"/>
-    </item>
-    <item row="1" column="0">
-     <widget class="QPushButton" name="addCameraButton">
-      <property name="text">
-       <string>Add Camera</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="1" rowspan="2">
+    <item row="0" column="1" rowspan="3">
      <layout class="QGridLayout" name="gridLayout">
       <property name="spacing">
        <number>8</number>
@@ -357,6 +347,27 @@
        </layout>
       </item>
      </layout>
+    </item>
+    <item row="2" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <item>
+       <widget class="QPushButton" name="deleteButton">
+        <property name="text">
+         <string>Delete Cameras</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="addCameraButton">
+        <property name="text">
+         <string>Add Camera</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="0" rowspan="2">
+     <layout class="QVBoxLayout" name="plotLayout"/>
     </item>
    </layout>
   </widget>
