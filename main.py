@@ -1,12 +1,15 @@
 #!/usr/bin/python
 import argparse
 import logging
-
+import psutil
 import time
+import os
 
 from DetectSerialPorts import serial_ports
 from Serial_reader import Serial_reader
 from WebSocketConnection import WebSocketConnection
+from multiprocessing import Process, Pipe
+from Constants import HIGH_PRIORITY
 
 __author__ = 'Alvaro'
 
@@ -34,19 +37,30 @@ def define_args_and_log():
 
 def main():
     args = define_args_and_log()
-    print "no gui mode"
     port = serial_ports()[0]
+    # the different process use a pipe to talk each other
+    web_pipe, serial_pipe = Pipe()
 
-    websocket = WebSocketConnection()
-    serial = Serial_reader(websocket.send_data, port)
-    websocket.set_callback(serial.write)
+    # serial runs its own process
+    usb_serial = Serial_reader(serial_pipe, port)
+    websocket = WebSocketConnection(web_pipe)
 
-    while(True):
-        websocket.ws.run_forever()
-        logging.warn("try to reconnect in 5")
-        time.sleep(5)
+    def run_websocket():
+        while usb_serial.is_open:
+            websocket.run_forever()
+            logging.warn("try to reconnect in 5")
+            time.sleep(5)
 
-    exit(1)  # exit with error
+    # give low priority to this process
+    psutil.Process(os.getpid()).nice(HIGH_PRIORITY)
+
+    try:
+        run_websocket()
+    except KeyboardInterrupt or RuntimeError as e:
+        usb_serial.close()
+        exit(1)  # exit with error (it's supose to run forever)
+
+
 
 
 if __name__ == '__main__':

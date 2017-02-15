@@ -1,34 +1,27 @@
 #!/usr/bin/python
-import re
-import thread
-import time
-from Queue import Queue
-from threading import Thread
-
-import websocket
 import logging
+import thread
+from Queue import Queue
 
-from Constants import INITIAL_SEQUENCE, WS_URL, CAMERA_PATH, CLIENT_PATH, PARAMETERS
+from websocket import WebSocketApp, ABNF
+from Constants import URL, CAMERA_PATH, PARAMETERS
 
-url = WS_URL
+print "using", URL
 
 
-class WebSocketConnection():
-    def __init__(self, url=WS_URL + CAMERA_PATH + PARAMETERS):
-        #websocket.enableTrace(True)
-        self.url = url
+class WebSocketConnection(WebSocketApp):
+    def __init__(self, pipe, url=URL + CAMERA_PATH + PARAMETERS):
+        WebSocketApp.__init__(self, url,
+                              on_message=self.on_message,
+                              on_error=self.on_error,
+                              on_close=self.on_close,
+                              on_open=self.on_open)
         self.open_connection = False
-        self.queue = Queue(5)
-        self.ws = websocket.WebSocketApp(self.url,
-                                         on_message=self.on_message,
-                                         on_error=self.on_error,
-                                         on_close=self.on_close,
-                                         on_open=self.on_open)
-
+        self.pipe = pipe
 
     def on_message(self, ws, message):
-        logging.warn("received command:%s", message)
-        self.callback(message)
+        logging.warn("received command:%s, %d bytes", message[0], len(message))
+        self.pipe.send(message)
 
     def on_error(self, ws, error):
         logging.error(error)
@@ -41,12 +34,19 @@ class WebSocketConnection():
         self.open_connection = True
         logging.warn("opened new socket")
 
+        def run():
+            while (self.open_connection == True):
+                data = self.pipe.recv()
+                self.send_data(data)
+
+        thread.start_new_thread(run, ())
+
     def stop(self):
         self.open_connection = False
 
     def send_data(self, data):
         if self.open_connection and len(data) != 0:
-            self.ws.send(data, opcode=websocket.ABNF.OPCODE_BINARY)
+            self.send(data, opcode=ABNF.OPCODE_BINARY)
 
-    def set_callback(self, callback):
-        self.callback = callback
+    def set_pipe(self, pipe):
+        self.pipe = pipe

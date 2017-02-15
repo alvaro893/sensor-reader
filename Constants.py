@@ -6,18 +6,16 @@ AUTHOR = 'Alvaro'
 __author__ = AUTHOR
 
 # URL = "https://ir-sensor-cloud.appspot.com/"
-URL = "http://server-ir-cloud.44fs.preview.openshiftapps.com/"
 URL_DEBUG = "ws://localhost:8080"
-WS_URL = "ws://cloudwebsocket2-ir-cloud.espoo-apps.ilab.cloud"
 CAMERA_PATH = "/camera"
 CLIENT_PATH = "/client"
-PASS = '0'
 try:
     with open(".env.json") as file:
         data = json.load(file)
-        PASS = data["WS_PASSWORD"]
+        PASS = data.get("WS_PASSWORD") or "0"
+        URL = data.get("URL") or "ws://cloudwebsocket2-ir-cloud.espoo-apps.ilab.cloud"
 except Exception:
-    logging.error("no .env.json file or no WS_PASSWORD key set in")
+    logging.error("no .env.json file")
     exit(1)
 
 PARAMETERS = "?pass=%s" % PASS
@@ -28,3 +26,6 @@ INITIAL_SEQUENCE = b'\xff\xff\xff'
 BAUD_SPEED = 115200
 
 WINDOWS = 'nt'
+
+VERY_HIGH_PRIORITY = -10
+HIGH_PRIORITY = -1
