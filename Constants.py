@@ -23,3 +23,4 @@ INITIAL_SEQUENCE = b'\xff\xff\xff'
 BAUD_SPEED = 115200
 
 WINDOWS = 'nt'
+print "using", WS_URL

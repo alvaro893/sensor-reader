@@ -1,7 +1,6 @@
 #!/usr/bin/python
 import logging
 import thread
-import threading
 import time
 from Queue import Queue
 from threading import Thread
@@ -16,7 +15,6 @@ url = WS_URL
 class WebSocketConnection(Thread):
     def __init__(self, url=WS_URL + CAMERA_PATH + PARAMETERS):
         Thread.__init__(self, name=WebSocketConnection.__name__)
-        #websocket.enableTrace(True)
         self.url = url
         self.is_open = True
         self.queue = Queue(2)
@@ -31,7 +29,8 @@ class WebSocketConnection(Thread):
     def run(self):
         while self.is_open:
             self.ws.run_forever()
-            logging.warn("try to reconnect in 5 secs")
+            if self.is_open:
+                logging.warn("try to reconnect in 5 secs")
             time.sleep(5)
 
     def on_message(self, ws, message):
@@ -43,6 +42,7 @@ class WebSocketConnection(Thread):
 
     def on_close(self, ws):
         logging.warn("### closed ###")
+        self.is_open = False
 
     def on_open(self, ws):
         logging.warn("opened new socket")
@@ -54,7 +54,6 @@ class WebSocketConnection(Thread):
         thread.start_new_thread(run, ())
 
     def stop(self):
-        self.is_open = False
         self.ws.close()
 
     def set_callback(self, callback):
@@ -85,10 +84,10 @@ class SerialThroughWebSocket(WebSocketConnection):
         self.send_to_socket(data)
 
     def _consume_data(self, data):
-        # logging.debug(' '.join(x.encode('hex') for x in data)
+        # logging.warn(' '.join(x.encode('hex') for x in data))
         machs = data.split(INITIAL_SEQUENCE)
         last_ind = len(machs) - 1
         for ind, line in enumerate(machs):
             if ind == last_ind: continue
             self.callback(bytearray(line))
-        return machs[-1]
+        return machs[last_ind]

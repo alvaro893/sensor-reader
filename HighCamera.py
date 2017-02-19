@@ -59,9 +59,9 @@ class HighCamera(Camera):
             self.process_frame()
 
     def process_frame(self):
-        #print self.frame_arr
         self.last_frame = self.frame_arr
         self.frame_arr = np.zeros((Y_LENGTH_IMAGE, X_LENGTH_IMAGE))
+        self.frame_ready_callback()
         #self.analysis_thread.put_arr_in_queue(self.frame_arr[::-1])
 
     def frame_callback(self, raw_data):
