@@ -25,6 +25,7 @@ Ui_PortDialog, QDialog = loadUiType('ui/Ui_PortDialog.ui')
 
 class MplCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
+    frame_ready = QtCore.pyqtSignal(str) # the signal to get a frame notification. (for some reason it has to be a class variable)
 
     def __init__(self, camera=None, port=None, parent=None, width=5, height=4, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
@@ -38,7 +39,10 @@ class MplCanvas(FigureCanvas):
         self.setParent(parent)
         FigureCanvas.setSizePolicy(self, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
-        self.camera.on_frame_ready(self.update_figure)
+
+        # this will update the canvas when a frame is available, from the ui thread using a signal
+        self.camera.on_frame_ready(lambda: self.frame_ready.emit('ready'))
+        self.frame_ready.connect(self.update_figure)
 
     def update_figure(self, new_arr):
         "must be implemented for children classes"
