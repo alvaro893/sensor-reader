@@ -23,29 +23,26 @@ Ui_PortDialog, QDialog = loadUiType('ui/Ui_PortDialog.ui')
 
 
 
-class MyMplCanvas(FigureCanvas):
+class MplCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
 
-    def __init__(self, port=None, parent=None, width=5, height=4, dpi=100):
+    def __init__(self, camera=None, port=None, parent=None, width=5, height=4, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
         self.figure = fig
-        self.camera = None
+        self.camera = camera
         # We want the axes cleared every time plot() is called
-        self.axes.hold(False)
-        # self.axes.axis('scaled')
-
+        # self.axes.hold(False)
 
         FigureCanvas.__init__(self, fig)
         self.setParent(parent)
-
-        FigureCanvas.setSizePolicy(self,
-                                   QtGui.QSizePolicy.Expanding,
-                                   QtGui.QSizePolicy.Expanding)
+        FigureCanvas.setSizePolicy(self, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
-        timer = QtCore.QTimer(self)
-        timer.timeout.connect(self.update_figure)
-        timer.start(100)
+        self.camera.on_frame_ready(self.update_figure)
+
+    def update_figure(self, new_arr):
+        "must be implemented for children classes"
+        pass
 
     def delete(self):
         self.camera.stop()
@@ -54,10 +51,9 @@ class MyMplCanvas(FigureCanvas):
 
 
 
-class MplCanvasHighCamera(MyMplCanvas):
+class MplCanvasHighCamera(MplCanvas):
     def __init__(self,port=None, *args, **kwargs):
-        MyMplCanvas.__init__(self, *args, **kwargs)
-        self.camera = HighCamera(port)
+        MplCanvas.__init__(self, camera=HighCamera(port), *args, **kwargs)
         self.figure.suptitle(port)
         arr = self.camera.last_frame
 
@@ -84,10 +80,13 @@ class MplCanvasHighCamera(MyMplCanvas):
         self.figure.colorbar(self.image, ax=self.axes)
 
     def update_figure(self):
-        new_arr = self.camera.last_frame
-        self.image.set_array(new_arr)
-        self.image.set_clim([new_arr.min(), new_arr.max()])  # autoscale
-        self.draw()
+        try:
+            new_arr = self.camera.last_frame
+            self.image.set_array(new_arr)
+            self.image.set_clim([new_arr.min(), new_arr.max()])  # autoscale
+            self.draw()
+        except AttributeError as er:
+            logging.error(er.message)
 
         mainWindow = self.window()
         telemetry = self.camera.telemetry
@@ -110,10 +109,9 @@ class MplCanvasHighCamera(MyMplCanvas):
             logging.error(e.message)
 
 
-class MplCanvasLowCamera(MyMplCanvas):
+class MplCanvasLowCamera(MplCanvas):
     def __init__(self, port=None, *args, **kwargs):
-        MyMplCanvas.__init__(self, *args, **kwargs)
-        self.camera = LowCamera(port)  #serial_ports()[0]
+        MplCanvas.__init__(self, camera=LowCamera(port), *args, **kwargs)
         arr = self.camera.last_frame
 
 
@@ -128,15 +126,17 @@ class MplCanvasLowCamera(MyMplCanvas):
         self.axes.set_xlim((0, self.camera.x_lim))
 
 
-    def update_figure(self):
-        new_arr = self.camera.last_frame
-        self.image.set_array(new_arr)
-        self.image.set_clim([new_arr.min(), new_arr.max()])  # autoscale
-        self.draw()
-        amin, amax, amean =  ("%.2f" % i for i in self.camera.get_absolute_values())
-        self.window().maxTempLabel.setText(str(amax))
-        self.window().minTempLabel.setText(str(amin))
-        self.window().meanTempLabel.setText(str(amean))
+    def update_figure(self, new_arr):
+        try:
+            self.image.set_array(new_arr)
+            self.image.set_clim([new_arr.min(), new_arr.max()])  # autoscale
+            self.draw()
+            amin, amax, amean =  ("%.2f" % i for i in self.camera.get_absolute_values())
+            self.window().maxTempLabel.setText(str(amax))
+            self.window().minTempLabel.setText(str(amin))
+            self.window().meanTempLabel.setText(str(amean))
+        except AttributeError as e:
+            logging.error(e.message)
 
 
 
@@ -183,7 +183,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def deleteCameras(self):
         canvas = self.camera_canvas.pop()
         canvas.delete()
-        self.l.removeWidget(canvas)
+        # self.l.removeWidget(canvas)
 
 
     def addCamera(self):

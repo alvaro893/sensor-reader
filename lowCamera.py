@@ -47,6 +47,7 @@ class LowCamera(Camera):
                 self.network_thread.send_to_socket(raw_frame)
         else:
             self.last_frame = self.process_frame(raw_frame)
+            self.frame_ready_callback()
 
 
     def process_frame(self,raw_frame):
