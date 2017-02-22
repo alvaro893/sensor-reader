@@ -5,8 +5,9 @@ import logging
 import sys
 from PyQt4 import QtGui, QtCore
 from PyQt4.uic import loadUiType
+from Queue import Queue
 
-from PyQt4.QtCore import QObject, SIGNAL
+from matplotlib import animation
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
@@ -19,18 +20,6 @@ Ui_MainWindow, QMainWindow = loadUiType('ui/Ui_MainWindow.ui')
 Ui_PortDialog, QDialog = loadUiType('ui/Ui_PortDialog.ui')
 
 
-# class Worker(QThread):
-#
-#     def __init__(self, parent):
-#         super(Worker, self).__init__(parent=parent)
-#         self.parent = parent
-#         self.start()
-#
-#     def run(self):
-#         while (True):
-#             self.parent.q.get()
-#             self.parent.update_figure()
-
 
 class MplCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
@@ -40,28 +29,37 @@ class MplCanvas(FigureCanvas):
         self.axes = fig.add_subplot(111)
         self.figure = fig
         self.camera = camera
-        self.signal = SIGNAL('frame_ready')
         # We want the axes cleared every time plot() is called
         # self.axes.hold(False)
 
         FigureCanvas.__init__(self, fig)
-        # self.q = Queue(1)
+        self.q = Queue(1)
         # self.worker = Worker(self)
         self.setParent(parent)
         FigureCanvas.setSizePolicy(self, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
 
         # this will update the canvas when a frame is available, from the ui thread using a signal
-        self.camera.on_frame_ready(lambda: self.emit(self.signal))
-        QObject.connect(self, self.signal, self.update_figure)
+        self.camera.on_frame_ready(self.add_to_queue)
+        # QObject.connect(self, self.signal, self.add_to_queue)
 
+        # define animation object
+        self.ani = animation.FuncAnimation(fig, self.update_figure, self.data_gen, blit=True, interval=10,
+                                      repeat=False)
+
+
+    def add_to_queue(self):
+        self.q.put(self.camera.last_frame)
+
+    def data_gen(self):
+        while not self.camera.stopped:
+            yield self.q.get(),
 
     def update_figure(self, new_arr):
         "must be implemented for children classes"
         pass
 
     def delete(self):
-        QObject.disconnect(self, self.signal, self.update_figure)
         self.camera.stop()
         self.deleteLater()
 
@@ -93,12 +91,12 @@ class MplCanvasHighCamera(MplCanvas):
 
         self.figure.colorbar(self.image, ax=self.axes)
 
-    def update_figure(self):
+
+    def update_figure(self, new_arr):
         try:
-            new_arr = self.camera.last_frame
-            self.image.set_array(new_arr)
-            self.image.set_clim([new_arr.min(), new_arr.max()])  # autoscale
-            self.draw()
+            arr, = new_arr
+            self.image.set_array(arr)
+            self.image.set_clim([arr.min(), arr.max()])  # autoscale
         except AttributeError as er:
             logging.error(er.message)
 
@@ -121,6 +119,9 @@ class MplCanvasHighCamera(MplCanvas):
             mainWindow.fpaTempLabel.setText("%.2f" % (telemetry['fpa_temp'] / 100.0 - 273.15))
         except KeyError as e:
             logging.error(e.message)
+
+        return self.image,
+
 
 
 class MplCanvasLowCamera(MplCanvas):
