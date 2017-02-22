@@ -1,62 +1,73 @@
 from __future__ import unicode_literals
-import sys
-
-import logging
 
 import datetime
-
-from Utils import serial_ports
-from HighCamera import HighCamera
-from lowCamera import LowCamera
-
-
+import logging
+import sys
 from PyQt4 import QtGui, QtCore
 from PyQt4.uic import loadUiType
 
+from PyQt4.QtCore import QObject, SIGNAL
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
+from HighCamera import HighCamera
+from Utils import serial_ports
+from lowCamera import LowCamera
 
 # Window file
 Ui_MainWindow, QMainWindow = loadUiType('ui/Ui_MainWindow.ui')
 Ui_PortDialog, QDialog = loadUiType('ui/Ui_PortDialog.ui')
 
 
+# class Worker(QThread):
+#
+#     def __init__(self, parent):
+#         super(Worker, self).__init__(parent=parent)
+#         self.parent = parent
+#         self.start()
+#
+#     def run(self):
+#         while (True):
+#             self.parent.q.get()
+#             self.parent.update_figure()
+
 
 class MplCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
-    frame_ready = QtCore.pyqtSignal(str) # the signal to get a frame notification. (for some reason it has to be a class variable)
 
     def __init__(self, camera=None, port=None, parent=None, width=5, height=4, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
         self.figure = fig
         self.camera = camera
+        self.signal = SIGNAL('frame_ready')
         # We want the axes cleared every time plot() is called
         # self.axes.hold(False)
 
         FigureCanvas.__init__(self, fig)
+        # self.q = Queue(1)
+        # self.worker = Worker(self)
         self.setParent(parent)
         FigureCanvas.setSizePolicy(self, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
 
         # this will update the canvas when a frame is available, from the ui thread using a signal
-        self.camera.on_frame_ready(lambda: self.frame_ready.emit('ready'))
-        self.frame_ready.connect(self.update_figure)
+        self.camera.on_frame_ready(lambda: self.emit(self.signal))
+        QObject.connect(self, self.signal, self.update_figure)
+
 
     def update_figure(self, new_arr):
         "must be implemented for children classes"
         pass
 
     def delete(self):
+        QObject.disconnect(self, self.signal, self.update_figure)
         self.camera.stop()
         self.deleteLater()
 
 
-
-
 class MplCanvasHighCamera(MplCanvas):
-    def __init__(self,port=None, *args, **kwargs):
+    def __init__(self, port=None, *args, **kwargs):
         MplCanvas.__init__(self, camera=HighCamera(port), *args, **kwargs)
         self.figure.suptitle(port)
         arr = self.camera.last_frame
@@ -72,7 +83,6 @@ class MplCanvasHighCamera(MplCanvas):
         mainWindow.minRawButton.clicked.connect(lambda: self.camera.min_raw(mainWindow.minRawSpinBox.text()))
         mainWindow.autoHighButton.clicked.connect(self.camera.auto_gain_hi)
         mainWindow.autoLowButton.clicked.connect(self.camera.auto_gain_low)
-
 
         # configure row and columns of plots
         self.image = self.axes.imshow(arr,
@@ -101,14 +111,14 @@ class MplCanvasHighCamera(MplCanvas):
             mainWindow.minRawLabel.setText(str(telemetry['raw_min_set']))
             mainWindow.bitDepthLabel.setText(str(telemetry['bit_depth']))
             mainWindow.delayLabel.setText(str(telemetry['frame_delay']))
-            mainWindow.timeCounterLabel.setText(str(datetime.timedelta(seconds=telemetry['time_counter']/1000)))
+            mainWindow.timeCounterLabel.setText(str(datetime.timedelta(seconds=telemetry['time_counter'] / 1000)))
             mainWindow.frameCounterLabel.setText(str(telemetry['frame_counter']))
             mainWindow.frameMeanLabel.setText(str(telemetry['frame_mean']))
             mainWindow.maxTempLabel.setText(str(telemetry['raw_max']))
             mainWindow.minTempLabel.setText(str(telemetry['raw_min']))
             mainWindow.discardPacketsLabel.setText(str(telemetry['discard_packets_count']))
             mainWindow.agcLabel.setText(str(telemetry['agc']))
-            mainWindow.fpaTempLabel.setText(str(telemetry['fpa_temp']))
+            mainWindow.fpaTempLabel.setText("%.2f" % (telemetry['fpa_temp'] / 100.0 - 273.15))
         except KeyError as e:
             logging.error(e.message)
 
@@ -117,7 +127,6 @@ class MplCanvasLowCamera(MplCanvas):
     def __init__(self, port=None, *args, **kwargs):
         MplCanvas.__init__(self, camera=LowCamera(port), *args, **kwargs)
         arr = self.camera.last_frame
-
 
         # configure row and columns of plots
         self.image = self.axes.imshow(arr,
@@ -129,13 +138,12 @@ class MplCanvasLowCamera(MplCanvas):
         self.figure.colorbar(self.image, ax=self.axes)
         self.axes.set_xlim((0, self.camera.x_lim))
 
-
     def update_figure(self, new_arr):
         try:
             self.image.set_array(new_arr)
             self.image.set_clim([new_arr.min(), new_arr.max()])  # autoscale
             self.draw()
-            amin, amax, amean =  ("%.2f" % i for i in self.camera.get_absolute_values())
+            amin, amax, amean = ("%.2f" % i for i in self.camera.get_absolute_values())
             self.window().maxTempLabel.setText(str(amax))
             self.window().minTempLabel.setText(str(amin))
             self.window().meanTempLabel.setText(str(amean))
@@ -143,9 +151,8 @@ class MplCanvasLowCamera(MplCanvas):
             logging.error(e.message)
 
 
-
 class PortDialog(QDialog, Ui_PortDialog):
-    def __init__(self,):
+    def __init__(self, ):
         super(PortDialog, self).__init__()
         self.setupUi(self)
         ports = serial_ports()
@@ -155,14 +162,15 @@ class PortDialog(QDialog, Ui_PortDialog):
         self.listWidget.setCurrentRow(0)
         self.was_accepted = False
         self.radioButtonHigh.setChecked(True)
-        #self.setWindowModality(QtCore.Qt.WindowModal)
+        # self.setWindowModality(QtCore.Qt.WindowModal)
 
     def accept(self):
         self.was_accepted = True
         self.close()
 
+
 class MainWindow(QMainWindow, Ui_MainWindow):
-    def __init__(self,):
+    def __init__(self, ):
         super(MainWindow, self).__init__()
         self.setupUi(self)
 
@@ -181,14 +189,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # l.addWidget(color)
 
         self.main_widget.setFocus()
-        #self.setCentralWidget(self.main_widget)
+        # self.setCentralWidget(self.main_widget)
         self.statusBar().showMessage("Alvaro", 2000)
 
     def deleteCameras(self):
         canvas = self.camera_canvas.pop()
         canvas.delete()
         # self.l.removeWidget(canvas)
-
 
     def addCamera(self):
         dialog = PortDialog()
@@ -228,10 +235,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         QtGui.QMessageBox.about(self, "About",
                                 """embedding_in_qt4.py example""")
 
+
 def run_ui():
     qApp = QtGui.QApplication(sys.argv)
 
     aw = MainWindow()
     aw.show()
     sys.exit(qApp.exec_())
-    #qApp.exec_()
+    # qApp.exec_()
