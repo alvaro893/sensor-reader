@@ -20,7 +20,6 @@ so the image is 160 x 120 (20198 Bytes)
 Y_LENGTH = 240
 X_LENGTH_IMAGE = 160
 Y_LENGTH_IMAGE = 120
-DEFAULT_MODE = 8
 
 
 class HighCamera(Camera):
@@ -67,10 +66,7 @@ class HighCamera(Camera):
     def frame_callback(self, raw_data):
         """ the hi-res camera gets one row from serial connection"""
         if self.only_send_data:
-            if self.use_http:
-                self.network_thread.add_to_buffer(raw_data, buff_size=300000)
-            else:
-                self.network_thread.send_to_socket(raw_data)
+            self.network_thread.send_to_socket(raw_data)
             self.network_thread.set_callback(self.network_callback)
         else:
             self.process_row(raw_data)
