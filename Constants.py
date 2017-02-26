@@ -9,8 +9,8 @@ URL_DEBUG = "ws://localhost:8080"
 CAMERA_PATH = "/camera"
 CLIENT_PATH = "/client"
 try:
-    with open(".env.json") as file:
-        data = json.load(file)
+    with open(".env.json") as f:
+        data = json.load(f)
         PASS = data.get("WS_PASSWORD") or "0"
         WS_URL = data.get("URL") or "ws://cloudwebsocket2-ir-cloud.espoo-apps.ilab.cloud"
 except IOError:
