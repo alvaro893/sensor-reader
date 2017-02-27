@@ -3,7 +3,12 @@ from __future__ import unicode_literals
 import datetime
 import logging
 import sys
+from time import sleep
+
 from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import QThread
+from PyQt4.QtGui import QCommandLinkButton
+from PyQt4.QtGui import QPushButton
 from PyQt4.uic import loadUiType
 from Queue import Queue
 
@@ -18,17 +23,22 @@ from lowCamera import LowCamera
 # Window file
 Ui_MainWindow, QMainWindow = loadUiType('ui/Ui_MainWindow.ui')
 Ui_PortDialog, QDialog = loadUiType('ui/Ui_PortDialog.ui')
+Ui_HiControl, QWidget = loadUiType('ui/Ui_HiControlWidget.ui')
+Ui_LowControl, QWidget = loadUiType('ui/Ui_LowControlWidget.ui')
 
 
 
 class MplCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
 
-    def __init__(self, camera=None, port=None, parent=None, width=5, height=4, dpi=100):
+    def __init__(self, camera=None, port=None, parent=None, width=5, height=4, dpi=100, **kwargs):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
         self.figure = fig
         self.camera = camera
+        self.title = kwargs['title'] or "From Network"
+        self.controlWidget = None
+
         # We want the axes cleared every time plot() is called
         # self.axes.hold(False)
 
@@ -52,8 +62,13 @@ class MplCanvas(FigureCanvas):
         self.q.put(self.camera.last_frame)
 
     def data_gen(self):
+        """ It gets the data from the camera and send it to update_figure function
+        using generator mechanism. "yield" sends a tuple but does not exit the function"""
         while not self.camera.stopped:
-            yield self.q.get(),
+            if not self.q.empty():
+                yield self.q.get(),
+            else:
+                yield
 
     def update_figure(self, new_arr):
         "must be implemented for children classes"
@@ -66,21 +81,10 @@ class MplCanvas(FigureCanvas):
 
 class MplCanvasHighCamera(MplCanvas):
     def __init__(self, port=None, *args, **kwargs):
-        MplCanvas.__init__(self, camera=HighCamera(port), *args, **kwargs)
+        MplCanvas.__init__(self, title=port,camera=HighCamera(port), *args, **kwargs)
         self.figure.suptitle(port)
         arr = self.camera.last_frame
 
-        # configure buttons for camera commands
-        mainWindow = self.window()
-        mainWindow.syncButton.clicked.connect(self.camera.sync)
-        mainWindow.calibrateButton.clicked.connect(self.camera.calibrate)
-        mainWindow.delayButton.clicked.connect(lambda: self.camera.delay(mainWindow.delayInput.text()))
-        mainWindow.bitDepthButton.clicked.connect(lambda:
-                                                  self.camera.bit_depth(int(mainWindow.bitDepthComboBox.currentText())))
-        mainWindow.maxRawButton.clicked.connect(lambda: self.camera.max_raw(mainWindow.maxRawSpinBox.text()))
-        mainWindow.minRawButton.clicked.connect(lambda: self.camera.min_raw(mainWindow.minRawSpinBox.text()))
-        mainWindow.autoHighButton.clicked.connect(self.camera.auto_gain_hi)
-        mainWindow.autoLowButton.clicked.connect(self.camera.auto_gain_low)
 
         # configure row and columns of plots
         self.image = self.axes.imshow(arr,
@@ -93,6 +97,12 @@ class MplCanvasHighCamera(MplCanvas):
 
 
     def update_figure(self, new_arr):
+        """" gets data from a generator (tuple) from data_get function and
+        updates the animation. in order of no blocking the ui the image must be updated even though
+        we did not get data"""
+        if new_arr == None:
+            sleep(0.01)  # this reduces cpu comsuption a lot
+            return self.image,
         try:
             arr, = new_arr
             self.image.set_array(arr)
@@ -100,23 +110,23 @@ class MplCanvasHighCamera(MplCanvas):
         except AttributeError as er:
             logging.error(er.message)
 
-        mainWindow = self.window()
+        control = self.controlWidget
         telemetry = self.camera.telemetry
 
         # show telemetry
         try:
-            mainWindow.maxRawLabel.setText(str(telemetry['raw_max_set']))
-            mainWindow.minRawLabel.setText(str(telemetry['raw_min_set']))
-            mainWindow.bitDepthLabel.setText(str(telemetry['bit_depth']))
-            mainWindow.delayLabel.setText(str(telemetry['frame_delay']))
-            mainWindow.timeCounterLabel.setText(str(datetime.timedelta(seconds=telemetry['time_counter'] / 1000)))
-            mainWindow.frameCounterLabel.setText(str(telemetry['frame_counter']))
-            mainWindow.frameMeanLabel.setText(str(telemetry['frame_mean']))
-            mainWindow.maxTempLabel.setText(str(telemetry['raw_max']))
-            mainWindow.minTempLabel.setText(str(telemetry['raw_min']))
-            mainWindow.discardPacketsLabel.setText(str(telemetry['discard_packets_count']))
-            mainWindow.agcLabel.setText(str(telemetry['agc']))
-            mainWindow.fpaTempLabel.setText("%.2f" % (telemetry['fpa_temp'] / 100.0 - 273.15))
+            control.maxRawLabel.setText(str(telemetry['raw_max_set']))
+            control.minRawLabel.setText(str(telemetry['raw_min_set']))
+            control.bitDepthLabel.setText(str(telemetry['bit_depth']))
+            control.delayLabel.setText(str(telemetry['frame_delay']))
+            control.timeCounterLabel.setText(str(datetime.timedelta(seconds=telemetry['time_counter'] / 1000)))
+            control.frameCounterLabel.setText(str(telemetry['frame_counter']))
+            control.frameMeanLabel.setText(str(telemetry['frame_mean']))
+            control.maxTempLabel.setText(str(telemetry['raw_max']))
+            control.minTempLabel.setText(str(telemetry['raw_min']))
+            control.discardPacketsLabel.setText(str(telemetry['discard_packets_count']))
+            control.agcLabel.setText(str(telemetry['agc']))
+            control.fpaTempLabel.setText("%.2f" % (telemetry['fpa_temp'] / 100.0 - 273.15))
         except KeyError as e:
             logging.error(e.message)
 
@@ -126,7 +136,7 @@ class MplCanvasHighCamera(MplCanvas):
 
 class MplCanvasLowCamera(MplCanvas):
     def __init__(self, port=None, *args, **kwargs):
-        MplCanvas.__init__(self, camera=LowCamera(port), *args, **kwargs)
+        MplCanvas.__init__(self, title=port, camera=LowCamera(port), *args, **kwargs)
         arr = self.camera.last_frame
 
         # configure row and columns of plots
@@ -169,6 +179,26 @@ class PortDialog(QDialog, Ui_PortDialog):
         self.was_accepted = True
         self.close()
 
+class HiControlWidget(QWidget, Ui_HiControl):
+    def __init__(self, camera):
+        super(HiControlWidget, self).__init__()
+        self.setupUi(self)
+        self.syncButton.clicked.connect(camera.sync)
+        self.calibrateButton.clicked.connect(camera.calibrate)
+        self.delayButton.clicked.connect(lambda: camera.delay(self.delayInput.text()))
+        self.bitDepthButton.clicked.connect(lambda:
+                                                  camera.bit_depth(int(self.bitDepthComboBox.currentText())))
+        self.maxRawButton.clicked.connect(lambda: camera.max_raw(self.maxRawSpinBox.text()))
+        self.minRawButton.clicked.connect(lambda: camera.min_raw(self.minRawSpinBox.text()))
+        self.autoHighButton.clicked.connect(camera.auto_gain_hi)
+        self.autoLowButton.clicked.connect(camera.auto_gain_low)
+
+
+
+class LowControlWidget(QWidget, Ui_LowControl):
+    def __init__(self):
+        super(LowControlWidget, self).__init__()
+
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, ):
@@ -179,11 +209,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setWindowTitle("application main window")
 
         self.main_widget = QtGui.QWidget(self)
-
         self.l = self.plotLayout
-        self.camera_canvas = []
+
+        self.sensorConnections = []
+        self.current_sensor_index = 0
+
         self.addCameraButton.clicked.connect(self.addCamera)
-        self.deleteButton.clicked.connect(self.deleteCameras)
+        self.deleteButton.clicked.connect(self.deleteSensor)
+        self.nextCameraButton.clicked.connect(self.nextCameraCallback(1))
+        self.previousCameraButton.clicked.connect(self.nextCameraCallback(-1))
 
         # color = MplCanvasHighCamera(parent=self.main_widget, width=5, height=4, dpi=100, port=serial_ports()[0])
         # self.camera_canvas.append(color)
@@ -193,10 +227,40 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # self.setCentralWidget(self.main_widget)
         self.statusBar().showMessage("Alvaro", 2000)
 
-    def deleteCameras(self):
-        canvas = self.camera_canvas.pop()
-        canvas.delete()
-        # self.l.removeWidget(canvas)
+    class SensorConnection:
+        def __init__(self, canvas, control):
+            self.title = canvas.title
+            # ui objects
+            self.canvas = canvas
+            self.control = control
+            self.canvas.controlWidget = control
+            canvas.figure.suptitle(self.title)
+
+        def destroy(self):
+            self.canvas.delete()
+            self.control.deleteLater()
+
+    def nextCameraCallback(self, increment):
+        def callback():
+            new_index = self.current_sensor_index + increment
+            if new_index in range(0, len(self.sensorConnections)):
+                print "new_index:", new_index
+                self.stackedWidget.setCurrentIndex(new_index)
+                self.controlLabel.setText("sensor %d : %s" % (new_index, self.sensorConnections[new_index].title))
+                self.current_sensor_index = new_index
+        return callback
+
+    def getCurrentSensor(self):
+        return
+
+
+    def deleteSensor(self):
+        if len(self.sensorConnections) == 0:
+            return
+        sensor = self.sensorConnections.pop(self.current_sensor_index)
+        sensor.destroy()
+        self.stackedWidget.removeWidget(sensor.control)
+        self.nextCameraCallback(-1)()
 
     def addCamera(self):
         dialog = PortDialog()
@@ -209,20 +273,29 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if port == dialog.hNetItem: port = None
 
             if dialog.radioButtonLow.isChecked():
-                self.createCamera(port, style='low')
+                style = 'low'
             if dialog.radioButtonHigh.isChecked():
-                self.createCamera(port, style='hi')
+                style = 'hi'
+            self.createSensorConnection(port, style)
 
-    def createCamera(self, port, style='hi'):
+
+    def createSensorConnection(self, port, style):
         if(style == 'hi'):
             canvas = MplCanvasHighCamera(parent=self.main_widget, width=5, height=4, dpi=100, port=port)
+            controlWidget = HiControlWidget(canvas.camera)
         else:
             print 'low'
             canvas = MplCanvasLowCamera(parent=self.main_widget, width=5, height=4, dpi=100, port=port)
-        self.camera_canvas.append(canvas)
+            controlWidget = LowControlWidget()
+
         self.l.addWidget(canvas)
-        self.camera_canvas.append(canvas)
-        canvas.figure.suptitle(self.current_port)
+        self.stackedWidget.addWidget(controlWidget)
+        self.stackedWidget.setCurrentWidget(controlWidget)
+        sensor = self.SensorConnection(canvas, controlWidget)
+        self.sensorConnections.append(sensor)
+        self.current_sensor_index = len(self.sensorConnections) - 1
+        self.controlLabel.setText("sensor %d : %s" % (self.current_sensor_index, sensor.title))
+
 
     def fileQuit(self):
         self.close()
