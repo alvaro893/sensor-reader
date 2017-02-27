@@ -1,4 +1,6 @@
 import logging
+from docutils.nodes import raw
+
 import numpy as np
 
 from Camera import Camera
@@ -20,7 +22,8 @@ so the image is 160 x 120 (20198 Bytes)
 Y_LENGTH = 240
 X_LENGTH_IMAGE = 160
 Y_LENGTH_IMAGE = 120
-
+TWO_BYTES_ROW = 13
+EIGHT_BYTES_ROW = 80
 
 class HighCamera(Camera):
 
@@ -40,7 +43,7 @@ class HighCamera(Camera):
         #self.bit_depth(DEFAULT_MODE)
 
     def process_row(self, row):
-        if(len(row) < 80):
+        if(len(row) < EIGHT_BYTES_ROW):
             return
         n_row = row[0]
 
@@ -69,7 +72,12 @@ class HighCamera(Camera):
             self.network_thread.send_to_socket(raw_data)
             self.network_thread.set_callback(self.network_callback)
         else:
-            self.process_row(raw_data)
+            # print len(raw_data)
+            if len(raw_data) > 0:
+                if len(raw_data) <= TWO_BYTES_ROW:
+                    self.process_row(self.process_row_2b(raw_data))
+                else:
+                    self.process_row(raw_data)
 
     def process_telemetry(self, data):
         # print ''.join('-({0:d}){1:02x}'.format(i,x) for i,x in enumerate(data))
@@ -149,3 +157,24 @@ class HighCamera(Camera):
 
     def delay(self, data):
         self.send_command('U', data)
+
+    def process_row_2b(self, raw_data):
+        """ this method has to be used in process_row function. it generates
+        the raw using less data"""
+        raw_data_array = bytearray(raw_data)
+        row = bytearray()
+        n_row = raw_data_array[0]
+        data = raw_data_array[1:]
+        for byte in data:
+            row_chunk = bytearray()
+            #byte >>= 1 # remove last bit
+            for i in xrange(7):
+                right_most_bit = byte & 1
+                row_chunk.append(right_most_bit * 255)
+                byte >>= 1
+            row += (row_chunk)
+        row.insert(0, n_row) # insert the rownumber
+        return row[:81] # remove the last 4 bytes
+
+
+

@@ -21,7 +21,9 @@ class Camera:
             self.serial_thread = SerialCommunication(self.frame_callback, port, get_raw_data_only=True)
             self.network_thread = WebSocketConnection()
         else:
-            if port == None:  # no port means that data comes from network
+            if port == 'test':
+                print 'testing'
+            elif port == None:  # no port means that data comes from network
                 self.serial_thread = SerialThroughWebSocket(self.frame_callback)
             else:
                 self.serial_thread = SerialCommunication(self.frame_callback, port)
