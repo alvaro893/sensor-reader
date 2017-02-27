@@ -62,11 +62,12 @@ class MplCanvas(FigureCanvas):
         self.q.put(self.camera.last_frame)
 
     def data_gen(self):
+        """ It gets the data from the camera and send it to update_figure function
+        using generator mechanism. "yield" sends a tuple but does not exit the function"""
         while not self.camera.stopped:
             if not self.q.empty():
                 yield self.q.get(),
             else:
-                sleep(0.05) # this reduces cpu comsuption a lot
                 yield
 
     def update_figure(self, new_arr):
@@ -96,7 +97,11 @@ class MplCanvasHighCamera(MplCanvas):
 
 
     def update_figure(self, new_arr):
+        """" gets data from a generator (tuple) from data_get function and
+        updates the animation. in order of no blocking the ui the image must be updated even though
+        we did not get data"""
         if new_arr == None:
+            sleep(0.01)  # this reduces cpu comsuption a lot
             return self.image,
         try:
             arr, = new_arr
