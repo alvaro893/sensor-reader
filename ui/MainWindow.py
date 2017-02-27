@@ -3,7 +3,10 @@ from __future__ import unicode_literals
 import datetime
 import logging
 import sys
+from time import sleep
+
 from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import QThread
 from PyQt4.QtGui import QCommandLinkButton
 from PyQt4.QtGui import QPushButton
 from PyQt4.uic import loadUiType
@@ -33,7 +36,7 @@ class MplCanvas(FigureCanvas):
         self.axes = fig.add_subplot(111)
         self.figure = fig
         self.camera = camera
-        self.title = kwargs['title']
+        self.title = kwargs['title'] or "From Network"
         self.controlWidget = None
 
         # We want the axes cleared every time plot() is called
@@ -60,7 +63,11 @@ class MplCanvas(FigureCanvas):
 
     def data_gen(self):
         while not self.camera.stopped:
-            yield self.q.get(),
+            if not self.q.empty():
+                yield self.q.get(),
+            else:
+                sleep(0.05) # this reduces cpu comsuption a lot
+                yield
 
     def update_figure(self, new_arr):
         "must be implemented for children classes"
@@ -89,6 +96,8 @@ class MplCanvasHighCamera(MplCanvas):
 
 
     def update_figure(self, new_arr):
+        if new_arr == None:
+            return self.image,
         try:
             arr, = new_arr
             self.image.set_array(arr)
@@ -200,7 +209,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.sensorConnections = []
         self.current_sensor_index = 0
 
-        print dir(self.stackedWidget)
         self.addCameraButton.clicked.connect(self.addCamera)
         self.deleteButton.clicked.connect(self.deleteCameras)
         self.nextCameraButton.clicked.connect(self.nextCameraCallback(1))
@@ -231,10 +239,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def nextCameraCallback(self, increment):
         def callback():
             new_index = self.current_sensor_index + increment
-            print "new_index:", new_index
             if new_index in range(0, len(self.sensorConnections)):
+                print "new_index:", new_index
                 self.stackedWidget.setCurrentIndex(new_index)
-                self.controlLabel.setText(self.sensorConnections[new_index].title)
+                self.controlLabel.setText("sensor %d : %s" % (new_index, self.sensorConnections[new_index].title))
                 self.current_sensor_index = new_index
         return callback
 
@@ -278,6 +286,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.stackedWidget.addWidget(controlWidget)
         sensor = self.SensorConnection(canvas, controlWidget)
         self.sensorConnections.append(sensor)
+        self.current_sensor_index = len(self.sensorConnections) - 1
+        self.controlLabel.setText("sensor %d : %s" % (self.current_sensor_index, sensor.title))
 
 
     def fileQuit(self):
