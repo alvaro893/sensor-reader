@@ -210,7 +210,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.current_sensor_index = 0
 
         self.addCameraButton.clicked.connect(self.addCamera)
-        self.deleteButton.clicked.connect(self.deleteCameras)
+        self.deleteButton.clicked.connect(self.deleteSensor)
         self.nextCameraButton.clicked.connect(self.nextCameraCallback(1))
         self.previousCameraButton.clicked.connect(self.nextCameraCallback(-1))
 
@@ -233,8 +233,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         def destroy(self):
             self.canvas.delete()
-            # w = self.control.window()
-            # w.stacket
+            self.control.deleteLater()
 
     def nextCameraCallback(self, increment):
         def callback():
@@ -246,15 +245,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.current_sensor_index = new_index
         return callback
 
+    def getCurrentSensor(self):
+        return
 
-    def deleteCameras(self):
-        canvas = self.camera_canvas.pop()
-        canvas.delete()
 
-        control = self.camera_controls.pop()
-        self.stackedWidget.removeWidget(control)
-        # control.setParent = None
-        # self.l.removeWidget(canvas)
+    def deleteSensor(self):
+        if len(self.sensorConnections) == 0:
+            return
+        sensor = self.sensorConnections.pop(self.current_sensor_index)
+        sensor.destroy()
+        self.stackedWidget.removeWidget(sensor.control)
+        self.nextCameraCallback(-1)()
 
     def addCamera(self):
         dialog = PortDialog()
@@ -284,6 +285,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.l.addWidget(canvas)
         self.stackedWidget.addWidget(controlWidget)
+        self.stackedWidget.setCurrentWidget(controlWidget)
         sensor = self.SensorConnection(canvas, controlWidget)
         self.sensorConnections.append(sensor)
         self.current_sensor_index = len(self.sensorConnections) - 1
