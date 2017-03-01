@@ -125,13 +125,22 @@ class MplCanvasHighCamera(MplCanvas):
             control.maxTempLabel.setText(str(telemetry['raw_max']))
             control.minTempLabel.setText(str(telemetry['raw_min']))
             control.discardPacketsLabel.setText(str(telemetry['discard_packets_count']))
-            control.agcLabel.setText(str(telemetry['agc']))
             control.fpaTempLabel.setText("%.2f" % (telemetry['fpa_temp'] / 100.0 - 273.15))
+
+            maxled, minled = self.getLedStatus(int(telemetry['agc']))
+            control.maxLed.setValue(maxled)
+            control.minLed.setValue(minled)
         except KeyError as e:
             logging.error(e.message)
 
         return self.image,
 
+    def getLedStatus(self, agc_byte):
+        """the bit in the left represents the minimum, the bit in the right the max"""
+        print agc_byte
+        minled_bit = agc_byte & 1 # 0b01 -> 1
+        maxled_bit = agc_byte >> 1 # 0b01 -> 0
+        return maxled_bit ^ 1, minled_bit ^ 1  # ^1 is like a bitwise not
 
 
 class MplCanvasLowCamera(MplCanvas):
@@ -192,6 +201,8 @@ class HiControlWidget(QWidget, Ui_HiControl):
         self.minRawButton.clicked.connect(lambda: camera.min_raw(self.minRawSpinBox.text()))
         self.autoHighButton.clicked.connect(camera.auto_gain_hi)
         self.autoLowButton.clicked.connect(camera.auto_gain_low)
+        self.maxLed
+        self.minLed
 
 
 

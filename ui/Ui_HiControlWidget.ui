@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>692</width>
-    <height>640</height>
+    <width>657</width>
+    <height>624</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -32,14 +32,14 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
+     <item row="3" column="2">
       <widget class="QLabel" name="delayLabel">
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
-     <item row="3" column="2">
+     <item row="3" column="3">
       <widget class="QCommandLinkButton" name="delayButton">
        <property name="cursor">
         <cursorShape>PointingHandCursor</cursorShape>
@@ -49,56 +49,56 @@
        </property>
       </widget>
      </item>
-     <item row="7" column="2">
+     <item row="7" column="3">
       <widget class="QCommandLinkButton" name="minRawButton">
        <property name="text">
-        <string>Send Min Raw Value</string>
+        <string>Send Min Limit</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="1">
+     <item row="4" column="2">
       <widget class="QLabel" name="bitDepthLabel">
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
-     <item row="5" column="2">
+     <item row="5" column="3">
       <widget class="QCommandLinkButton" name="maxRawButton">
        <property name="text">
-        <string>Send Max Raw Value</string>
+        <string>Send Max Limit</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="5" column="2">
       <widget class="QLabel" name="maxRawLabel">
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
-     <item row="8" column="2">
+     <item row="8" column="3">
       <widget class="QCommandLinkButton" name="autoHighButton">
        <property name="text">
         <string>Auto high values</string>
        </property>
       </widget>
      </item>
-     <item row="9" column="2">
+     <item row="9" column="3">
       <widget class="QCommandLinkButton" name="autoLowButton">
        <property name="text">
         <string>Auto low values</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="2">
+     <item row="1" column="3">
       <widget class="QCommandLinkButton" name="syncButton">
        <property name="text">
         <string>sync</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="2">
+     <item row="4" column="3">
       <widget class="QCommandLinkButton" name="bitDepthButton">
        <property name="text">
         <string>Send Bit Depth</string>
@@ -134,7 +134,7 @@
        </item>
       </widget>
      </item>
-     <item row="2" column="2">
+     <item row="2" column="3">
       <widget class="QCommandLinkButton" name="calibrateButton">
        <property name="text">
         <string>Calibrate</string>
@@ -151,7 +151,7 @@
        </property>
       </widget>
      </item>
-     <item row="8" column="0" rowspan="3" colspan="2">
+     <item row="8" column="0" rowspan="3" colspan="3">
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
         <layout class="QFormLayout" name="formLayout">
@@ -229,30 +229,6 @@
            </property>
           </widget>
          </item>
-         <item row="4" column="1">
-          <widget class="QLabel" name="frameMeanLabel">
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="0">
-          <widget class="QLabel" name="label_6">
-           <property name="styleSheet">
-            <string notr="true">background-color: rgb(255, 255, 255);</string>
-           </property>
-           <property name="text">
-            <string>agc</string>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="1">
-          <widget class="QLabel" name="agcLabel">
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
          <item row="4" column="0">
           <widget class="QLabel" name="label_5">
            <property name="styleSheet">
@@ -263,10 +239,27 @@
            </property>
           </widget>
          </item>
+         <item row="4" column="1">
+          <widget class="QLabel" name="frameMeanLabel">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="QLabel" name="agcLabel">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
         <layout class="QFormLayout" name="formLayout_3">
+         <property name="fieldGrowthPolicy">
+          <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+         </property>
          <item row="0" column="0">
           <widget class="QLabel" name="label_7">
            <property name="styleSheet">
@@ -322,7 +315,7 @@
        </item>
       </layout>
      </item>
-     <item row="10" column="2">
+     <item row="10" column="3">
       <spacer name="verticalSpacer">
        <property name="orientation">
         <enum>Qt::Vertical</enum>
@@ -335,10 +328,66 @@
        </property>
       </spacer>
      </item>
-     <item row="7" column="1">
+     <item row="7" column="2">
       <widget class="QLabel" name="minRawLabel">
        <property name="text">
         <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QProgressBar" name="maxLed">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string extracomment="Indicates if value is not automatic"/>
+       </property>
+       <property name="minimum">
+        <number>0</number>
+       </property>
+       <property name="maximum">
+        <number>1</number>
+       </property>
+       <property name="value">
+        <number>0</number>
+       </property>
+       <property name="textVisible">
+        <bool>true</bool>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="invertedAppearance">
+        <bool>false</bool>
+       </property>
+       <property name="format">
+        <string>manual max</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="QProgressBar" name="minLed">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximum">
+        <number>1</number>
+       </property>
+       <property name="value">
+        <number>0</number>
+       </property>
+       <property name="textVisible">
+        <bool>true</bool>
+       </property>
+       <property name="format">
+        <string>manual min</string>
        </property>
       </widget>
      </item>
