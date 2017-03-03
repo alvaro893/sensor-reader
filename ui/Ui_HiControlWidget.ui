@@ -151,7 +151,20 @@
        </property>
       </widget>
      </item>
-     <item row="8" column="0" rowspan="3" colspan="3">
+     <item row="11" column="3">
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="8" column="0" rowspan="4" colspan="3">
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
         <layout class="QFormLayout" name="formLayout">
@@ -167,7 +180,7 @@
             <string notr="true">background-color: rgb(255, 255, 255);</string>
            </property>
            <property name="text">
-            <string>time count</string>
+            <string>time awake</string>
            </property>
           </widget>
          </item>
@@ -311,22 +324,23 @@
            </property>
           </widget>
          </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_6">
+           <property name="text">
+            <string>time count</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLabel" name="timeCounterLabel2">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
       </layout>
-     </item>
-     <item row="10" column="3">
-      <spacer name="verticalSpacer">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>40</height>
-        </size>
-       </property>
-      </spacer>
      </item>
      <item row="7" column="2">
       <widget class="QLabel" name="minRawLabel">
@@ -388,6 +402,13 @@
        </property>
        <property name="format">
         <string>manual min</string>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="3">
+      <widget class="QCommandLinkButton" name="resetTimeButton">
+       <property name="text">
+        <string>Send Reset Time</string>
        </property>
       </widget>
      </item>
