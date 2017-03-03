@@ -17,8 +17,6 @@ except IOError:
     logging.error("no .env file")
 
 PARAMETERS = "?pass=%s" % PASS
-PORT_LINUX = '/dev/ttyACM0', '/dev/ttyACM1'
-PORT_WINDOWS = 'COM4', 'COM5'
 INITIAL_SEQUENCE = b'\xff\xff\xff'
 BAUD_SPEED = 115200
 

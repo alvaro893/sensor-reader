@@ -96,6 +96,7 @@ class HighCamera(Camera):
         telemetry['agc'] =                    '{:02d}'.format( data[34] )
         telemetry['bit_depth'] =              '{:01d} bits'.format( data[35] )
         telemetry['frame_delay'] =            from_bytes_to_int( data[38:36:-1] )
+        telemetry['time_counter2'] =            from_bytes_to_int( data[44:42:-1] + data[41:39:-1] )
 
         self.telemetry = telemetry
         # for k,v in telemetry.iteritems():
@@ -148,6 +149,9 @@ class HighCamera(Camera):
 
     def auto_gain_low(self):
         self.send_command('a')
+
+    def sync_time(self):
+        self.send_command('T')
 
     def bit_depth(self, data):
         # bit_bepth command data only will accept one byte
