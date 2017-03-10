@@ -5,7 +5,6 @@ import logging
 AUTHOR = 'Alvaro'
 __author__ = AUTHOR
 
-# URL = "https://ir-sensor-cloud.appspot.com/"
 URL_DEBUG = "ws://localhost:8080"
 CAMERA_PATH = "/camera"
 CLIENT_PATH = "/client"
@@ -14,11 +13,12 @@ try:
         data = json.load(file)
         PASS = data.get("WS_PASSWORD") or "0"
         URL = data.get("URL") or "ws://cloudwebsocket2-ir-cloud.espoo-apps.ilab.cloud"
+        CAMERA_NAME = data.get("CAMERA_NAME") or ""
 except Exception:
     logging.error("no .env.json file")
     exit(1)
 
-PARAMETERS = "?pass=%s" % PASS
+PARAMETERS = "?pass=%s&camera_name=%s" % (PASS, CAMERA_NAME)
 
 PORT_LINUX = '/dev/ttyACM0', '/dev/ttyACM1'
 PORT_WINDOWS = 'COM4', 'COM5'
