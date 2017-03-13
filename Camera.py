@@ -23,8 +23,8 @@ class Camera:
         else:
             if port == 'test':
                 print 'testing'
-            elif port == None:  # no port means that data comes from network
-                self.serial_thread = SerialThroughWebSocket(self.frame_callback)
+            elif port.find('network:') != -1:  # if contains 'network:' means that data comes from network
+                self.serial_thread = SerialThroughWebSocket(self.frame_callback, port)
             else:
                 self.serial_thread = SerialCommunication(self.frame_callback, port)
 

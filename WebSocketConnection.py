@@ -67,8 +67,8 @@ class WebSocketConnection(Thread):
 class SerialThroughWebSocket(WebSocketConnection):
     """This class acts like a serial reader but uses The websocket connection"""
 
-    def __init__(self, callback):
-        WebSocketConnection.__init__(self, url=WS_URL + CLIENT_PATH + PARAMETERS)
+    def __init__(self, callback, sensor_name):
+        WebSocketConnection.__init__(self, url=WS_URL + CLIENT_PATH + PARAMETERS + '&camera_name=' + sensor_name)
         self.name = SerialThroughWebSocket.__name__
         self.callback = callback
         self.remains = b''
