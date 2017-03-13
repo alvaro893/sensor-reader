@@ -1,6 +1,4 @@
 import logging
-from docutils.nodes import raw
-
 import numpy as np
 
 from Camera import Camera

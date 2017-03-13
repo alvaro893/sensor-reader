@@ -16,6 +16,7 @@ from matplotlib import animation
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
+import HttpConnection
 from HighCamera import HighCamera
 from Utils import serial_ports
 from lowCamera import LowCamera
@@ -176,9 +177,9 @@ class PortDialog(QDialog, Ui_PortDialog):
         super(PortDialog, self).__init__()
         self.setupUi(self)
         ports = serial_ports()
+        AVAILABLE_CAMERAS=HttpConnection.get_cameras().get('names') or []
+        self.listWidget.addItems(['network:'+cam for cam in AVAILABLE_CAMERAS])
         self.listWidget.addItems(ports)
-        self.hNetItem = "High Camera From network (WebSocket)"
-        self.listWidget.addItem(self.hNetItem)
         self.listWidget.setCurrentRow(0)
         self.was_accepted = False
         self.radioButtonHigh.setChecked(True)
@@ -281,9 +282,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         if dialog.was_accepted:
             port = str(dialog.listWidget.currentItem().text())
-            self.current_port = port
-            if port == dialog.hNetItem: port = None
-
             if dialog.radioButtonLow.isChecked():
                 style = 'low'
             if dialog.radioButtonHigh.isChecked():
