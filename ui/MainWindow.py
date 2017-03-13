@@ -177,7 +177,8 @@ class PortDialog(QDialog, Ui_PortDialog):
         super(PortDialog, self).__init__()
         self.setupUi(self)
         ports = serial_ports()
-        AVAILABLE_CAMERAS=HttpConnection.get_cameras().get('names') or []
+        # AVAILABLE_CAMERAS=HttpConnection.get_cameras().get('names') or []
+        AVAILABLE_CAMERAS = ["camera%d" % n for n in xrange(5)]
         self.listWidget.addItems(['network:'+cam for cam in AVAILABLE_CAMERAS])
         self.listWidget.addItems(ports)
         self.listWidget.setCurrentRow(0)
