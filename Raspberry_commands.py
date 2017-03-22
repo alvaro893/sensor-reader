@@ -3,10 +3,10 @@ from subprocess32 import call
 import logging
 
 def shutdown():
-    run_command_async("poweroff")
+    run_command_async("/sbin/poweroff")
 
 def reboot():
-    run_command_async("reboot")
+    run_command_async("/sbin/reboot")
 
 def update():
     run_command_async("./build.sh")
@@ -19,11 +19,13 @@ def error():
 
 def run_command_async(*args):
     def run(*args):
-        result = call(args)
-        if result > 0:
-            error()
-
+        try:
+            result = call(args)
+            logging.debug("command result:" + str(result))
+        except Exception as e:
+            logging.error(e.message)
         print "running command finished"
+
     start_new_thread(run, args)
 
 commands = {
