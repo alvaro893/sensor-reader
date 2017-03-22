@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # This will install all dependencies, run it as root
-
+git pull origin raspberry
 # Create env file
 ENV_FILE=".env.json"
 if [ ! -f "$ENV_FILE" ]; then

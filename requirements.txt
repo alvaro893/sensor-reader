@@ -1,3 +1,4 @@
 pyserial
 websocket_client
 psutil
+subprocess32

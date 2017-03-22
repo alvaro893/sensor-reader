@@ -5,6 +5,7 @@ from Queue import Queue
 
 from websocket import WebSocketApp, ABNF
 from Constants import URL, CAMERA_PATH, PARAMETERS
+from Raspberry_commands import is_raspberry_command
 
 print "using", URL
 
@@ -21,7 +22,8 @@ class WebSocketConnection(WebSocketApp):
 
     def on_message(self, ws, message):
         logging.warn("received command:%s, %d bytes", message[0], len(message))
-        self.pipe.send(message)
+        if not is_raspberry_command(message):
+            self.pipe.send(message)
 
     def on_error(self, ws, error):
         logging.error(error)
