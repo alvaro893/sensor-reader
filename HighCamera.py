@@ -160,6 +160,15 @@ class HighCamera(Camera):
     def delay(self, data):
         self.send_command('U', data)
 
+    def shutdown_rpi(self):
+        self.send_command('rs')
+
+    def reboot_rpi(self):
+        self.send_command('rr')
+
+    def update_rpi(self):
+        self.send_command('ru')
+
     def process_row_2b(self, raw_data):
         """ this method has to be used in process_row function. it generates
         the raw using less data"""
