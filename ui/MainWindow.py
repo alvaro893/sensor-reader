@@ -177,9 +177,9 @@ class PortDialog(QDialog, Ui_PortDialog):
         super(PortDialog, self).__init__()
         self.setupUi(self)
         ports = serial_ports()
-        # AVAILABLE_CAMERAS=HttpConnection.get_cameras().get('names') or []
-        AVAILABLE_CAMERAS = ["camera%d" % n for n in xrange(5)]
-        self.listWidget.addItems(['network:'+cam for cam in AVAILABLE_CAMERAS])
+        AVAILABLE_CAMERAS=HttpConnection.get_cameras().get('cams') or []
+        # AVAILABLE_CAMERAS = ["camera%d" % n for n in xrange(5)]
+        self.listWidget.addItems(['network:'+cam['name'] for cam in AVAILABLE_CAMERAS])
         self.listWidget.addItems(ports)
         self.listWidget.setCurrentRow(0)
         self.was_accepted = False
@@ -204,6 +204,10 @@ class HiControlWidget(QWidget, Ui_HiControl):
         self.autoHighButton.clicked.connect(camera.auto_gain_hi)
         self.autoLowButton.clicked.connect(camera.auto_gain_low)
         self.resetTimeButton.clicked.connect(camera.sync_time)
+        self.shutdownButton.clicked.connect(camera.shutdown_rpi)
+        self.shutdownButton.setEnabled(False)
+        self.rebootButton.clicked.connect(camera.reboot_rpi)
+        self.updateButton.clicked.connect(camera.update_rpi)
         self.maxLed
         self.minLed
 
