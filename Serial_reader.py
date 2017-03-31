@@ -42,8 +42,13 @@ class Serial_reader(Serial):
             try:
                 data = self._get_data()
                 self.pipe.send(data)
-            except SerialException as e:
-                logging.error(e.message)
+            except IOError as ioe:
+                logging.error(ioe.message)
+                logging.warning("flushing serial")
+                self.flush()
+                #sleep(0.05)
+            except SerialException as se:
+                logging.error(se.message)
                 self.stop()
                 break
 

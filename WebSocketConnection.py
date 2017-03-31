@@ -5,9 +5,9 @@ from Queue import Queue
 
 from websocket import WebSocketApp, ABNF
 from Constants import URL, CAMERA_PATH, PARAMETERS
-from Raspberry_commands import is_raspberry_command
+from Raspberry_commands import is_raspberry_command, reboot
 
-print "using", URL
+logging.warning("url %s" % URL)
 
 
 class WebSocketConnection(WebSocketApp):
@@ -37,9 +37,19 @@ class WebSocketConnection(WebSocketApp):
         logging.warn("opened new socket")
 
         def run():
+            counter = 0
             while (self.open_connection == True):
-                data = self.pipe.recv()
-                self.send_data(data)
+                try:
+                    data = self.pipe.recv()
+                    self.send_data(data)
+                except IOError as ioe:
+                    logging.error(ioe.message)
+                    counter += 1
+                    if counter > 10:
+                        logging.warning("sensor reading failed %d times. raspberry pi must be reboot. reason: %s"
+                                        % (counter, ioe.message))
+                        reboot()
+                counter = 0
 
         thread.start_new_thread(run, ())
 

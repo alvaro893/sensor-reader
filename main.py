@@ -1,6 +1,10 @@
 #!/usr/bin/python
-import argparse
 import logging
+
+FORMAT = "%(levelname)s [%(asctime)s %(filename)s:%(lineno)s - %(funcName)s() ] %(message)s"
+logging.basicConfig(filename='logs.log', format=FORMAT)
+
+import argparse
 import psutil
 import time
 import os
@@ -29,8 +33,7 @@ def define_args_and_log():
     )
 
     args = parser.parse_args()
-    FORMAT = "[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
-    logging.basicConfig(format=FORMAT, level=args.loglevel)
+    logging.basicConfig(filename='logs.log', format=FORMAT, level=args.loglevel)
     return args
 
 
