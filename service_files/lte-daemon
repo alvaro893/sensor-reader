@@ -1,0 +1,19 @@
+#!/bin/bash
+# keeps lte connection alive
+QMI="/usr/bin/qmi-network"
+DEVICE="/dev/cdc-wdm0"
+
+STATUS="$QMI $DEVICE status"
+STOP="$QMI $DEVICE stop"
+START="$QMI $DEVICE start"
+
+# if status is not ok, restart lte module
+while true
+do
+if ! eval $STATUS; then
+   eval $STOP
+   eval $START
+fi
+sleep 20
+done
+
