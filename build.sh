@@ -15,4 +15,4 @@ date >> "$logfile"
 chmod -R +x "$service_files_path"
 
 # run main script and log it
-"$service_files_path/main-script.sh" >> "$logfile" 2>&1
+"$service_files_path/main-script.sh" |& tee -a "$logfile"
