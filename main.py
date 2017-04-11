@@ -11,8 +11,6 @@ my_handler.setFormatter(formatter)
 app_log = logging.getLogger('') #using default logger
 app_log.addHandler(my_handler)
 ### end logging config
-while True:
- app_log.error('error')
 
 import argparse
 import psutil
