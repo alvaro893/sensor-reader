@@ -14,6 +14,9 @@ def update():
 def test():
     run_command_async("sleep", "3")
 
+def resetsensor():
+    run_command_async("/home/pi/reset-sensor")
+
 def error():
     logging.warn("shell error")
 
@@ -21,10 +24,10 @@ def run_command_async(*args):
     def run(*args):
         try:
             result = call(args)
-            logging.debug("command result:" + str(result))
+            logging.info("command result:" + str(result))
         except Exception as e:
             logging.error(e.message)
-        print "running command finished"
+        logging.info("running command finished")
 
     start_new_thread(run, args)
 

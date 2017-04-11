@@ -3,9 +3,9 @@ import logging
 import thread
 from Queue import Queue
 
-from websocket import WebSocketApp, ABNF
+from websocket import WebSocketApp, ABNF, WebSocketException
 from Constants import URL, CAMERA_PATH, PARAMETERS
-from Raspberry_commands import is_raspberry_command, reboot
+from Raspberry_commands import is_raspberry_command, resetsensor
 
 logging.warning("url %s" % URL)
 
@@ -37,19 +37,19 @@ class WebSocketConnection(WebSocketApp):
         logging.warn("opened new socket")
 
         def run():
-            counter = 0
             while (self.open_connection == True):
                 try:
                     data = self.pipe.recv()
                     self.send_data(data)
+                    raise IOError("hi")
+                except WebSocketException as wse:
+                    logging.error("Restarting sensor application dues to:"+wse.message)
+                    self.stop()
+                    resetsensor()
                 except IOError as ioe:
-                    logging.error(ioe.message)
-                    counter += 1
-                    if counter > 10:
-                        logging.warning("sensor reading failed %d times. raspberry pi must be reboot. reason: %s"
-                                        % (counter, ioe.message))
-                        reboot()
-                counter = 0
+                    logging.error("Restarting sensor application dues to:"+ioe.message)
+                    self.stop()
+                    resetsensor()
 
         thread.start_new_thread(run, ())
 

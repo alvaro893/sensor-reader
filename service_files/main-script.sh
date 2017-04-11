@@ -25,7 +25,6 @@ sudo pip install -r requirements.txt --upgrade
 sudo cp /usr/share/zoneinfo/Europe/Helsinki /etc/localtime
 # copy scripts and add permissions
 cp "$services$lted" "$home$lted"
-
 chmod +x "$home$lted"
 
 # update crontab jobs

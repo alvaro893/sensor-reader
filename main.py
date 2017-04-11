@@ -8,8 +8,10 @@ formatter = logging.Formatter("%(levelname)s [%(asctime)s %(filename)s:%(lineno)
 LOGFILE = 'logs.log'
 my_handler = RotatingFileHandler(LOGFILE, mode='a', maxBytes=1*1024*1024, backupCount=1, encoding=None, delay=0)
 my_handler.setFormatter(formatter)
+my_handler.setLevel(logging.INFO)
 app_log = logging.getLogger('') #using default logger
 app_log.addHandler(my_handler)
+app_log.setLevel(logging.INFO)
 ### end logging config
 
 import argparse
