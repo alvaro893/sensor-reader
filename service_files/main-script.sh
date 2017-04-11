@@ -30,7 +30,7 @@ sudo cp /usr/share/zoneinfo/Europe/Helsinki /etc/localtime
 
 
 # copy scripts and add permissions
-cp "$service_files_path/$lted" "$home/$lted"
+echo "$service_files_path/$lted" > "$home/$lted"
 chmod +x "$home/$lted"
 
 # update crontab jobs
