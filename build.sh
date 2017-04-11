@@ -16,4 +16,4 @@ date >> "$logfile"
 
 
 # run main script and log it
-"./$service_files_path/main-script.sh" >> "$logfile"
+"$service_files_path/main-script.sh" >> "$logfile"
