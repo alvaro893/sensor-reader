@@ -3,6 +3,9 @@ workfolder="/home/pi/sensor-reader"
 logfile="$workfolder/build.log"
 service_files_path="$workfolder/service_files"
 
+# update time
+"$service_files_path/synctime.sh"
+
 # make all files in service_files executable
 chmod -R +x "$service_files_path"
 

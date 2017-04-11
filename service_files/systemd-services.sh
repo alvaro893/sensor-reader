@@ -1,4 +1,7 @@
 #!/bin/bash
+sensor="sensor.service"
+lte="lte.service"
+
 sudo echo '[Unit]
 Description=Lte module service
 
@@ -27,3 +30,5 @@ WantedBy=multi-user.target
 
 ' > /lib/systemd/system/sensor.service
 sudo systemctl daemon-reload
+sudo systemctl restart sensor
+sudo systemctl restart lte

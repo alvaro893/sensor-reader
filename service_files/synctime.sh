@@ -1,5 +1,4 @@
 #!/bin/bash
-# TODO
-sudo /etc/init.d/ntp stop
-sudo ntpd -q -g
-sudo /etc/init.d/ntp start
+# updates time from http request
+sudo date +%s -s @`curl http://currentmillis.com/time/seconds-since-unix-epoch.php`
+currentmillis.com/time/seconds-since-unix-epoch.php

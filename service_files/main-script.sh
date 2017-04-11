@@ -1,8 +1,12 @@
 #!/bin/bash
-lted="/lte-daemon"
 #rebootd="/reboot-daemon"
-home="/home/pi/"
-services="service_files"
+home="/home/pi"
+workfolder="$home/sensor-reader"
+service_files="service_files"
+service_files_path="$workfolder/service_files"
+lted="lte-daemon"
+systemdscript="systemd-services.sh"
+
 
 
 # Called from Raspberry_commands update() function
@@ -24,7 +28,7 @@ sudo pip install -r requirements.txt --upgrade
 # set the localtime
 sudo cp /usr/share/zoneinfo/Europe/Helsinki /etc/localtime
 # copy scripts and add permissions
-cp "$services$lted" "$home$lted"
+cp "$service_files$/lted" "$home$/lted"
 chmod +x "$home$lted"
 
 # update crontab jobs
@@ -41,6 +45,7 @@ if [ ! -d "$TEENSY_CLI_DIR" ]; then
 fi
 
 # update systemd services
-./systemd-services.sh
+"$service_files_path/$systemdscript"
+
 
 echo "Done"
