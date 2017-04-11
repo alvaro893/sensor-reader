@@ -1,8 +1,18 @@
 #!/usr/bin/python
-import logging
 
-FORMAT = "%(levelname)s [%(asctime)s %(filename)s:%(lineno)s - %(funcName)s() ] %(message)s"
-logging.basicConfig(filename='logs.log', format=FORMAT)
+### logging config
+import logging
+from logging.handlers import RotatingFileHandler
+
+formatter = logging.Formatter("%(levelname)s [%(asctime)s %(filename)s:%(lineno)s - %(funcName)s() ] %(message)s")
+LOGFILE = 'logs.log'
+my_handler = RotatingFileHandler(LOGFILE, mode='a', maxBytes=1*1024*1024, backupCount=1, encoding=None, delay=0)
+my_handler.setFormatter(formatter)
+app_log = logging.getLogger('') #using default logger
+app_log.addHandler(my_handler)
+### end logging config
+while True:
+ app_log.error('error')
 
 import argparse
 import psutil
@@ -33,7 +43,7 @@ def define_args_and_log():
     )
 
     args = parser.parse_args()
-    logging.basicConfig(filename='logs.log', format=FORMAT, level=args.loglevel)
+    # logging.basicConfig(filename='logs.log', format=formatter, level=args.loglevel)
     return args
 
 
