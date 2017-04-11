@@ -41,7 +41,6 @@ class WebSocketConnection(WebSocketApp):
                 try:
                     data = self.pipe.recv()
                     self.send_data(data)
-                    raise IOError("hi")
                 except WebSocketException as wse:
                     logging.error("Restarting sensor application dues to:"+wse.message)
                     self.stop()
