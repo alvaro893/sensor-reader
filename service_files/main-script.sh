@@ -25,11 +25,13 @@ apt-get install ntpdate python-dev libusb-dev -y
 sudo pip install pip --upgrade
 sudo pip install -r requirements.txt --upgrade
 
-# set the localtime
+# set the Helsinki hourzone
 sudo cp /usr/share/zoneinfo/Europe/Helsinki /etc/localtime
+
+
 # copy scripts and add permissions
-cp "$service_files$/lted" "$home$/lted"
-chmod +x "$home$lted"
+cp "$service_files_path/$lted" "$home$/lted"
+chmod +x "$home/$lted"
 
 # update crontab jobs
 crontab -r  # remove file
