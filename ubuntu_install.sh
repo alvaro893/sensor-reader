@@ -11,7 +11,7 @@ if [ ! -f "$ENV_FILE" ]; then
 fi
 
 # PyQT must be installed from Ubuntu repository
-sudo apt-get install python-qt4 python-pip -y
+sudo apt-get install python-qt4 qt4-designer python-pip -y
 sudo pip install pip --upgrade
 sudo pip install -r requirements.txt --upgrade
 
