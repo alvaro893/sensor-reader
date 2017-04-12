@@ -128,6 +128,8 @@ class MplCanvasHighCamera(MplCanvas):
             control.discardPacketsLabel.setText(str(telemetry['discard_packets_count']))
             control.fpaTempLabel.setText("%.2f" % (telemetry['fpa_temp'] / 100.0 - 273.15))
             control.timeCounterLabel2.setText(str(telemetry['time_counter2']))
+            control.frameStateLabel.setText(str(telemetry['frame_state']))
+            control.sensorVersionLabel.setText(str(telemetry['sensor_version']))
 
             maxled, minled = self.getLedStatus(int(telemetry['agc']))
             control.maxLed.setValue(maxled)
@@ -204,6 +206,8 @@ class HiControlWidget(QWidget, Ui_HiControl):
         self.autoHighButton.clicked.connect(camera.auto_gain_hi)
         self.autoLowButton.clicked.connect(camera.auto_gain_low)
         self.resetTimeButton.clicked.connect(camera.sync_time)
+        self.lastFrameButton.clicked.connect(camera.freeze_sensor)
+        self.resetTeensyButton.clicked.connect(camera.reset_teensy)
         self.shutdownButton.clicked.connect(camera.shutdown_rpi)
         self.shutdownButton.setEnabled(False)
         self.rebootButton.clicked.connect(camera.reboot_rpi)
