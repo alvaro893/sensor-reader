@@ -47,9 +47,10 @@ class HighCamera(Camera):
 
         if n_row < Y_LENGTH:  # normal row
             try:
-                for indx, val in enumerate(row[1:]):
-                    f_row = (n_row)/2
-                    f_col = (n_row) % 2 * 80 + indx
+                reversed_row = row[1:][::-1]
+                for indx, val in enumerate(reversed_row):
+                    f_row = n_row / 2
+                    f_col = (n_row + 1) % 2 * 80 + indx # 'add 1 to n_row' to reverse order
                     self.frame_arr[f_row][f_col] = val
 
             except ValueError and IndexError as e:
