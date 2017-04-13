@@ -14,6 +14,10 @@ class Serial_reader(Serial):
         self.pipe = pipe
         self._start_process()
 
+        #send a delay of 500 ms
+        b = bytearray('U') + bytearray('\x01\xf4')
+        self.write(b)
+
     def _start_process(self):
         process = Process(name="SerialProcess", target=self._run, args=())
         process.daemon = True
