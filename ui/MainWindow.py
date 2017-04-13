@@ -268,7 +268,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if new_index in range(0, len(self.sensorConnections)):
                 print "new_index:", new_index
                 self.stackedWidget.setCurrentIndex(new_index)
-                self.controlLabel.setText("sensor %d : %s" % (new_index, self.sensorConnections[new_index].title))
+                self.controlLabel.setText("%s" % (self.sensorConnections[new_index].title))
                 self.current_sensor_index = new_index
         return callback
 
@@ -313,7 +313,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         sensor = self.SensorConnection(canvas, controlWidget)
         self.sensorConnections.append(sensor)
         self.current_sensor_index = len(self.sensorConnections) - 1
-        self.controlLabel.setText("sensor %d : %s" % (self.current_sensor_index, sensor.title))
+        self.controlLabel.setText("%s" % (sensor.title))
 
 
     def fileQuit(self):
