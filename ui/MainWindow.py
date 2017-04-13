@@ -33,7 +33,9 @@ class MplCanvas(FigureCanvas):
 
     def __init__(self, camera=None, port=None, parent=None, width=5, height=4, dpi=100, **kwargs):
         fig = Figure(figsize=(width, height), dpi=dpi)
+
         self.axes = fig.add_subplot(111)
+        self.axes.set_axis_off()
         self.figure = fig
         self.camera = camera
         self.title = kwargs['title'] or "From Network"
@@ -129,8 +131,16 @@ class MplCanvasHighCamera(MplCanvas):
             control.sensorVersionLabel.setText(str(telemetry['sensor_version']))
 
             maxled, minled = self.getLedStatus(int(telemetry['agc']))
-            control.maxLed.setValue(maxled)
-            control.minLed.setValue(minled)
+            # control.maxLed.setValue(maxled)
+            # control.minLed.setValue(minled)
+            def is_manual(manual):
+                if manual:
+                    return "manual"
+                else:
+                    return "auto"
+            control.maxLed.setFormat(is_manual(maxled))
+            control.minLed.setFormat(is_manual(minled))
+
         except KeyError as e:
             logging.error(e.message)
 
