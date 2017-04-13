@@ -72,14 +72,14 @@
         <item>
          <widget class="QPushButton" name="deleteButton">
           <property name="text">
-           <string>Delete Camera</string>
+           <string>Stop</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="addCameraButton">
           <property name="text">
-           <string>Add Camera</string>
+           <string>Start</string>
           </property>
          </widget>
         </item>
@@ -96,7 +96,7 @@
      <x>0</x>
      <y>0</y>
      <width>1028</width>
-     <height>21</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuPorts">

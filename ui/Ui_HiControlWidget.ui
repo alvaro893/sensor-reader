@@ -38,28 +38,7 @@
        </item>
       </widget>
      </item>
-     <item row="14" column="3">
-      <widget class="QCommandLinkButton" name="shutdownButton">
-       <property name="text">
-        <string>Shutdow Rpi</string>
-       </property>
-      </widget>
-     </item>
-     <item row="15" column="3">
-      <widget class="QCommandLinkButton" name="rebootButton">
-       <property name="text">
-        <string>Reboot Rpi</string>
-       </property>
-      </widget>
-     </item>
-     <item row="16" column="3">
-      <widget class="QCommandLinkButton" name="updateButton">
-       <property name="text">
-        <string>Update Rpi</string>
-       </property>
-      </widget>
-     </item>
-     <item row="17" column="3">
+     <item row="10" column="3">
       <spacer name="verticalSpacer">
        <property name="orientation">
         <enum>Qt::Vertical</enum>
@@ -85,13 +64,6 @@
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="13" column="3">
-      <widget class="Line" name="line">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
@@ -239,7 +211,7 @@
        </property>
       </widget>
      </item>
-     <item row="8" column="0" rowspan="10" colspan="3">
+     <item row="8" column="0" rowspan="3" colspan="3">
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
         <spacer name="verticalSpacer_2">
@@ -532,27 +504,6 @@
        </property>
        <property name="value">
         <number>300</number>
-       </property>
-      </widget>
-     </item>
-     <item row="10" column="3">
-      <widget class="QCommandLinkButton" name="resetTimeButton">
-       <property name="text">
-        <string>Send Reset Time</string>
-       </property>
-      </widget>
-     </item>
-     <item row="11" column="3">
-      <widget class="QCommandLinkButton" name="lastFrameButton">
-       <property name="text">
-        <string>Last Frame</string>
-       </property>
-      </widget>
-     </item>
-     <item row="12" column="3">
-      <widget class="QCommandLinkButton" name="resetTeensyButton">
-       <property name="text">
-        <string>Reset Teensy</string>
        </property>
       </widget>
      </item>

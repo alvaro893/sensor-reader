@@ -23,7 +23,6 @@ from lowCamera import LowCamera
 
 # Window file
 Ui_MainWindow, QMainWindow = loadUiType('ui/Ui_MainWindow.ui')
-Ui_PortDialog, QDialog = loadUiType('ui/Ui_PortDialog.ui')
 Ui_HiControl, QWidget = loadUiType('ui/Ui_HiControlWidget.ui')
 Ui_LowControl, QWidget = loadUiType('ui/Ui_LowControlWidget.ui')
 
@@ -93,8 +92,6 @@ class MplCanvasHighCamera(MplCanvas):
                                       clim=[arr.min(), arr.max()],
                                       cmap="CMRmap",
                                       origin='lower')
-
-        self.figure.colorbar(self.image, ax=self.axes)
 
 
     def update_figure(self, new_arr):
@@ -174,23 +171,6 @@ class MplCanvasLowCamera(MplCanvas):
             logging.error(e.message)
 
 
-class PortDialog(QDialog, Ui_PortDialog):
-    def __init__(self, ):
-        super(PortDialog, self).__init__()
-        self.setupUi(self)
-        ports = serial_ports()
-        AVAILABLE_CAMERAS=HttpConnection.get_cameras().get('cams') or []
-        # AVAILABLE_CAMERAS = ["camera%d" % n for n in xrange(5)]
-        self.listWidget.addItems(['network:'+cam['name'] for cam in AVAILABLE_CAMERAS])
-        self.listWidget.addItems(ports)
-        self.listWidget.setCurrentRow(0)
-        self.was_accepted = False
-        self.radioButtonHigh.setChecked(True)
-        # self.setWindowModality(QtCore.Qt.WindowModal)
-
-    def accept(self):
-        self.was_accepted = True
-        self.close()
 
 class HiControlWidget(QWidget, Ui_HiControl):
     def __init__(self, camera):
@@ -205,16 +185,7 @@ class HiControlWidget(QWidget, Ui_HiControl):
         self.minRawButton.clicked.connect(lambda: camera.min_raw(self.minRawSpinBox.text()))
         self.autoHighButton.clicked.connect(camera.auto_gain_hi)
         self.autoLowButton.clicked.connect(camera.auto_gain_low)
-        self.resetTimeButton.clicked.connect(camera.sync_time)
-        self.lastFrameButton.clicked.connect(camera.freeze_sensor)
-        self.resetTeensyButton.clicked.connect(camera.reset_teensy)
-        self.shutdownButton.clicked.connect(camera.shutdown_rpi)
-        self.shutdownButton.setEnabled(False)
-        self.rebootButton.clicked.connect(camera.reboot_rpi)
-        self.updateButton.clicked.connect(camera.update_rpi)
-        self.maxLed
-        self.minLed
-
+        # self.rebootButton.clicked.connect(camera.reboot_rpi)
 
 
 class LowControlWidget(QWidget, Ui_LowControl):
@@ -237,7 +208,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.current_sensor_index = 0
 
         self.addCameraButton.clicked.connect(self.addCamera)
-        self.deleteButton.clicked.connect(self.deleteSensor)
+        self.deleteButton.clicked.connect(self.delete2Sensors)
         self.nextCameraButton.clicked.connect(self.nextCameraCallback(1))
         self.previousCameraButton.clicked.connect(self.nextCameraCallback(-1))
 
@@ -268,7 +239,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if new_index in range(0, len(self.sensorConnections)):
                 print "new_index:", new_index
                 self.stackedWidget.setCurrentIndex(new_index)
-                self.controlLabel.setText("sensor %d : %s" % (new_index, self.sensorConnections[new_index].title))
+                self.controlLabel.setText("%s" % (self.sensorConnections[new_index].title))
                 self.current_sensor_index = new_index
         return callback
 
@@ -284,18 +255,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.stackedWidget.removeWidget(sensor.control)
         self.nextCameraCallback(-1)()
 
-    def addCamera(self):
-        dialog = PortDialog()
-        dialog.buttonBox.accepted.connect(dialog.accept)
-        dialog.exec_()
+    def delete2Sensors(self):
+        self.deleteSensor()
+        self.deleteSensor()
+        self.addCameraButton.setEnabled(True)
 
-        if dialog.was_accepted:
-            port = str(dialog.listWidget.currentItem().text())
-            if dialog.radioButtonLow.isChecked():
-                style = 'low'
-            if dialog.radioButtonHigh.isChecked():
-                style = 'hi'
-            self.createSensorConnection(port, style)
+
+    def addCamera(self):
+        self.createSensorConnection("network:SENSOR1", "hi")
+        self.createSensorConnection("network:SENSOR2", "hi")
+        self.addCameraButton.setEnabled(False)
 
 
     def createSensorConnection(self, port, style):
@@ -313,7 +282,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         sensor = self.SensorConnection(canvas, controlWidget)
         self.sensorConnections.append(sensor)
         self.current_sensor_index = len(self.sensorConnections) - 1
-        self.controlLabel.setText("sensor %d : %s" % (self.current_sensor_index, sensor.title))
+        self.controlLabel.setText("%s" % (sensor.title))
 
 
     def fileQuit(self):
