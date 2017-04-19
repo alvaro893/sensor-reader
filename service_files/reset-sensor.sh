@@ -1,4 +1,4 @@
 #!/bin/bash
 systemctl restart sensor
 
-echo "Sensor service restarted"
+echo "-------Sensor service restarted"

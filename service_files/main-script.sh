@@ -49,4 +49,4 @@ fi
 # update systemd services
 "$service_files_path/$systemdscript"
 
-echo "Main Script finished"
+echo "---------Main Script finished"

@@ -3,4 +3,4 @@
 sudo date +%s -s @`curl http://currentmillis.com/time/seconds-since-unix-epoch.php`
 currentmillis.com/time/seconds-since-unix-epoch.php
 
-echo "Time synchronized"
+echo "---------Time synchronized"

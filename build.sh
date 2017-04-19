@@ -17,4 +17,4 @@ chmod -R +x "$service_files_path"
 # run main script and log it
 "$service_files_path/main-script.sh" |& tee -a "$logfile"
 
-echo "Build.sh script done" |& tee -a "$logfile"
+echo "------Build.sh script done" |& tee -a "$logfile"
