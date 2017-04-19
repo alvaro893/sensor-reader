@@ -32,3 +32,5 @@ WantedBy=multi-user.target
 sudo systemctl daemon-reload
 sudo systemctl restart sensor
 sudo systemctl restart lte
+
+echo "Systemctl Services Updated"
