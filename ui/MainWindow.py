@@ -204,7 +204,7 @@ class LowControlWidget(QWidget, Ui_LowControl):
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
-    def __init__(self, ):
+    def __init__(self, window_number=0):
         super(MainWindow, self).__init__()
         self.setupUi(self)
 
@@ -217,7 +217,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.sensorConnections = []
         self.current_sensor_index = 0
 
-        self.addCameraButton.clicked.connect(self.addCamera)
+        if(window_number > 0):
+            self.addCameraButton.clicked.connect(self.addCamera)
+        else:
+            self.addCameraButton.clicked.connect(self.addCamera2)
         self.deleteButton.clicked.connect(self.delete2Sensors)
         self.nextCameraButton.clicked.connect(self.nextCameraCallback(1))
         self.previousCameraButton.clicked.connect(self.nextCameraCallback(-1))
@@ -273,7 +276,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def addCamera(self):
         self.createSensorConnection("network:SENSOR1", "hi")
-        self.createSensorConnection("network:SENSOR2", "hi")
+        self.createSensorConnection("network:SENSOR5", "hi")
+        self.addCameraButton.setEnabled(False)
+
+    def addCamera2(self):
+        self.createSensorConnection("network:SENSOR4", "hi")
+        self.createSensorConnection("network:SENSOR6", "hi")
         self.addCameraButton.setEnabled(False)
 
 
@@ -313,5 +321,7 @@ def run_ui():
 
     aw = MainWindow()
     aw.show()
+    aw2 = MainWindow(1)
+    aw2.show()
     sys.exit(qApp.exec_())
     # qApp.exec_()
