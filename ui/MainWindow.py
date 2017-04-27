@@ -204,11 +204,8 @@ class LowControlWidget(QWidget, Ui_LowControl):
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
-<<<<<<< HEAD
     def __init__(self, window_number=0):
-=======
-    def __init__(self, ):
->>>>>>> 34da0a07ee661c3bd2469df0fd4161f528de99a7
+
         super(MainWindow, self).__init__()
         self.setupUi(self)
 
@@ -281,16 +278,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def addCamera(self):
         self.createSensorConnection("network:SENSOR1", "hi")
-<<<<<<< HEAD
         self.createSensorConnection("network:SENSOR5", "hi")
         self.addCameraButton.setEnabled(False)
 
     def addCamera2(self):
         self.createSensorConnection("network:SENSOR4", "hi")
         self.createSensorConnection("network:SENSOR6", "hi")
-=======
-        self.createSensorConnection("network:SENSOR2", "hi")
->>>>>>> 34da0a07ee661c3bd2469df0fd4161f528de99a7
+
         self.addCameraButton.setEnabled(False)
 
 
