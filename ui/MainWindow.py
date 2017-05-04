@@ -277,13 +277,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
 
     def addCamera(self):
-        self.createSensorConnection("network:SENSOR1", "hi")
-        self.createSensorConnection("network:SENSOR5", "hi")
+        self.createSensorConnection("network:LOBBY1", "hi")
+        self.createSensorConnection("network:LOBBY2", "hi")
         self.addCameraButton.setEnabled(False)
 
     def addCamera2(self):
-        self.createSensorConnection("network:SENSOR4", "hi")
-        self.createSensorConnection("network:SENSOR6", "hi")
+        self.createSensorConnection("network:RESTAURANT1", "hi")
+        self.createSensorConnection("network:RESTAURANT2", "hi")
 
         self.addCameraButton.setEnabled(False)
 
