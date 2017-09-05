@@ -1,4 +1,4 @@
-pyserial
-websocket_client
-psutil
-subprocess32
+pyserial==3.3
+websocket_client==0.40.0
+psutil==5.2.2
+subprocess32==3.2.7

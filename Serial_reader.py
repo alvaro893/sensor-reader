@@ -1,5 +1,6 @@
 import thread
 import logging
+from time import sleep
 import psutil
 import os
 from multiprocessing import Process
@@ -15,9 +16,9 @@ class Serial_reader(Serial):
         self._start_process()
 
         #send a delay of 500 ms, high temp of 4000, low temp of 3200
-        self.write(bytearray('U') + bytearray('\x01\xf4'))
-        self.write(bytearray('H') + bytearray('\x0f\xA0'))
-        self.write(bytearray('L') + bytearray('\x0c\x80'))
+        self.write(bytearray('U') + bytearray('\x01\xf4')); sleep(50)
+        self.write(bytearray('H') + bytearray('\x0f\xA0')); sleep(50)
+        self.write(bytearray('L') + bytearray('\x0c\x80')); sleep(50)
 
     def _start_process(self):
         process = Process(name="SerialProcess", target=self._run, args=())
