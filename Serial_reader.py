@@ -10,15 +10,16 @@ from Constants import VERY_HIGH_PRIORITY, HIGH_PRIORITY
 class Serial_reader(Serial):
     """" This class read data from sensor in a Thread """
 
-    def __init__(self, pipe, port):
+    def __init__(self, network_pipe, analysis_pipe, port):
         Serial.__init__(self, port=port, baudrate=115200)
-        self.pipe = pipe
+        self.network_pipe = network_pipe
+        self.analysis_pipe = analysis_pipe
         self._start_process()
 
         #send a delay of 500 ms, high temp of 4000, low temp of 3200
-        self.write(bytearray('U') + bytearray('\x01\xf4')); sleep(50)
-        self.write(bytearray('H') + bytearray('\x0f\xA0')); sleep(50)
-        self.write(bytearray('L') + bytearray('\x0c\x80')); sleep(50)
+        self.write(bytearray('U') + bytearray('\x01\xf4')); #sleep(50)
+        self.write(bytearray('H') + bytearray('\x0f\xA0')); #sleep(50)
+        self.write(bytearray('L') + bytearray('\x0c\x80')); #sleep(50)
 
     def _start_process(self):
         process = Process(name="SerialProcess", target=self._run, args=())
@@ -27,7 +28,7 @@ class Serial_reader(Serial):
         try:
             psutil.Process(process.pid).nice(VERY_HIGH_PRIORITY)
         except psutil.AccessDenied as e:
-            psutil.Process(process.pid).nice(HIGH_PRIORITY)
+            logging.error("do not have permission to change priority!")
 
     def _get_data(self):
         # necessary to block thread (in_waiting method doesn't block)
@@ -38,7 +39,7 @@ class Serial_reader(Serial):
     def _send_data(self):
         while self.is_open:
             print "waiting for commands"
-            data = self.pipe.recv()
+            data = self.network_pipe.recv()
             print data
             self.write(data)
 
@@ -47,7 +48,8 @@ class Serial_reader(Serial):
         while self.is_open:
             try:
                 data = self._get_data()
-                self.pipe.send(data)
+                self.network_pipe.send(data)
+                self.analysis_pipe.send(data)
             except IOError as ioe:
                 logging.error(ioe.message)
                 logging.warning("flushing serial")

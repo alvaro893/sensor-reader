@@ -1,10 +1,12 @@
 import json
 
 import logging
+import os
 
 AUTHOR = 'Alvaro'
 __author__ = AUTHOR
 
+DIR = os.path.dirname(__file__)
 URL_DEBUG = "ws://localhost:8080"
 CAMERA_PATH = "/camera"
 CLIENT_PATH = "/client"
@@ -29,3 +31,5 @@ WINDOWS = 'nt'
 
 VERY_HIGH_PRIORITY = -10
 HIGH_PRIORITY = -1
+IMAGES_PATH = "analysis/images/"
+HEATMAP_PATH = IMAGES_PATH + "colored_heatmap.png"
