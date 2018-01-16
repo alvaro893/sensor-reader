@@ -1,11 +1,12 @@
-import thread
 import logging
-from time import sleep
-import psutil
-import os
+import thread
 from multiprocessing import Process
-from serial import Serial, SerialException
-from Constants import VERY_HIGH_PRIORITY, HIGH_PRIORITY
+
+import psutil
+from serial import Serial, SerialException, STOPBITS_ONE, EIGHTBITS, PARITY_NONE
+
+from Constants import VERY_HIGH_PRIORITY
+
 
 class Serial_reader(Serial):
     """" This class read data from sensor in a Thread """
@@ -25,6 +26,7 @@ class Serial_reader(Serial):
         process = Process(name="SerialProcess", target=self._run, args=())
         process.daemon = True
         process.start()
+        logging.info("Serial Process started, pid:" + str(process.pid))
         try:
             psutil.Process(process.pid).nice(VERY_HIGH_PRIORITY)
         except psutil.AccessDenied as e:

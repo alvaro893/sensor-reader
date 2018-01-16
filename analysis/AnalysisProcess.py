@@ -14,7 +14,7 @@ class AnalysisProcess(Process):
         self.cameraConnection = CameraConnection()
         self.daemon = True
         self.start()
-        print "AnalysisProcess started"
+        logging.info("Started Analysis process, pid:" + str(self.pid))
         try:
             psutil.Process(self.pid).nice(HIGH_PRIORITY)
         except psutil.AccessDenied as e:

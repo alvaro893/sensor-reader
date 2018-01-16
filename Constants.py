@@ -7,14 +7,16 @@ AUTHOR = 'Alvaro'
 __author__ = AUTHOR
 
 DIR = os.path.dirname(__file__)
-URL_DEBUG = "ws://localhost:8080"
 CAMERA_PATH = "/camera"
 CLIENT_PATH = "/client"
 try:
     with open(".env.json") as file:
         data = json.load(file)
         PASS = data.get("WS_PASSWORD") or "0"
-        URL = data.get("URL") or "ws://cloudwebsocket2-ir-cloud.espoo-apps.ilab.cloud"
+        URL = data.get("URL")
+        PORT = data.get("PORT") or 80
+        MAX_HOUR = data.get("MAX_HOUR")
+        MAX_MIN = data.get("MAX_MIN")
         CAMERA_NAME = data.get("CAMERA_NAME") or ""
 except Exception:
     logging.error("no .env.json file")

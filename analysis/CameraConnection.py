@@ -7,7 +7,7 @@ import copy, logging
 import time_utils
 from Camera import Camera
 import image_analysis as ia
-from Constants import CAMERA_NAME, HEATMAP_PATH
+from Constants import CAMERA_NAME, HEATMAP_PATH, MAX_HOUR, MAX_MIN
 from httpClient import HttpClient
 
 
@@ -36,8 +36,6 @@ class CameraConnection():
         img = self.camera.last_frame_stream
         img = cv2.imencode('.jpg', img)[1].tostring()
 
-        # use condition or Analyze all frames
-        thread.start_new_thread(self._analyze_frame, ())
 
         # Time conditions to create heatmap
         delta = time.time() - self.last_hetmap_time
@@ -46,18 +44,21 @@ class CameraConnection():
         hour_minute = time_utils.get_hour_minute()
         weekday = time_utils.get_weekday()
 
-
-        condition_one = (15 > hour > 8) and minute % 1 == 0 and delta > 2
-        condition_two = hour_minute == '15:00' and delta > 2
+        # Remember that this disable heatmap after normal hours
+        max_hour = int(MAX_HOUR) or 15
+        max_min = int(MAX_MIN) or 5
+        condition_one = (max_hour > hour > 8) and minute % max_min == 0 and delta > 60
+        condition_two = hour_minute == '15:00' and delta > 60
         if (condition_one or condition_two) and weekday < 5:
+            thread.start_new_thread(self._analyze_frame, ())
             self.last_hetmap_time = time.time()
 
-            # Drop outliers created by camera calibration from both lists
-            people_list, frame_list = ia.drop_outliers(self.people_list, self.frame_list)
-            if(len(frame_list) != 0):
-                heatmap = ia.make_heatmap_grayscale(np.asarray(frame_list).reshape(len(frame_list), -1))
-                # post data using http
-                self._submitData(people_list[-1])
+        # Drop outliers created by camera calibration from both lists
+        people_list, frame_list = ia.drop_outliers(self.people_list, self.frame_list)
+        if(len(frame_list) != 0):
+            heatmap = ia.make_heatmap_grayscale(np.asarray(frame_list).reshape(len(frame_list), -1))
+            # post data using http
+            self._submitData(people_list[-1])
 
         #Cleaning list of frames and people
         #print self.people_list

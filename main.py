@@ -44,11 +44,11 @@ def define_args_and_log():
         help="Be verbose",
         action="store_const", dest="loglevel", const=logging.INFO,
     )
-    parser.add_argument(
-        '-du', '--debug-url',
-        help="use debug_url to connect defined on Constants.py",
-        action="store_const", dest="Constants.URL", const=Constants.URL_DEBUG,
-    )
+    # parser.add_argument(
+    #     '-du', '--debug-url',
+    #     help="use debug_url to connect defined on Constants.py",
+    #     action="store_const", dest="Constants.URL", const=Constants.URL_DEBUG,
+    # )
 
 
     args = parser.parse_args()
