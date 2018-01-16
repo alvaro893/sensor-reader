@@ -47,15 +47,18 @@ class WebSocketConnection(WebSocketApp):
                     if self.should_send_data:
                         self.send_data(data)
                 except WebSocketException as wse:
-                    logging.error("Restarting sensor application due to:"+wse.message)
-                    self.stop()
-                    resetsensor()
+                    self.handleError(wse)
                 except IOError as ioe:
-                    logging.error("Restarting sensor application due to:"+ioe.message)
-                    self.stop()
-                    resetsensor()
+                    self.handleError(ioe)
+                except EOFError as eof:
+                    self.handleError(eof)
 
         thread.start_new_thread(run, ())
+
+    def handleError(self, err):
+        logging.error("Restarting sensor application due to:"+err.message)
+        self.stop()
+        resetsensor()
 
     def stop(self):
         self.open_connection = False

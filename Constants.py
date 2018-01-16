@@ -15,9 +15,14 @@ try:
         PASS = data.get("WS_PASSWORD") or "0"
         URL = data.get("URL")
         PORT = data.get("PORT") or 80
+        CAMERA_NAME = data.get("CAMERA_NAME") or ""
+        #Time operations
         MAX_HOUR = data.get("MAX_HOUR")
         MAX_MIN = data.get("MAX_MIN")
-        CAMERA_NAME = data.get("CAMERA_NAME") or ""
+        #Sensor command
+        SENSOR_DELAY = data.get("SENSOR_DELAY") or 500
+        SENSOR_MAX_THRESHOLD = data.get("SENSOR_MAX_THRESHOLD")
+        SENSOR_MIN_THRESHOLD =  data.get("SENSOR_MIN_THRESHOLD")
 except Exception:
     logging.error("no .env.json file")
     exit(1)
