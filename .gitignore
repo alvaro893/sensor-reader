@@ -5,3 +5,7 @@
 build
 dist
 main.spec
+analysis/build
+analysis/*.c
+analysis/*.so
+analysis/images/colored_heatmap.png
