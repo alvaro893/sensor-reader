@@ -18,18 +18,19 @@ Every row of the actual picture has 2 rows of the raw data
 so the image is 160 x 120 (20198 Bytes)
 """
 
-Y_LENGTH = 240
-X_LENGTH_IMAGE = 160
-Y_LENGTH_IMAGE = 120
-TWO_BYTES_ROW = 13
-EIGHT_BYTES_ROW = 80
+
 
 def nothing(): pass
 
 class Camera():
+    MAX_DATA_ROW = 240
+    IMAGE_WIDTH = 160
+    IMAGE_HEIGHT = 120
+    ROW_SIZE_2BIT = 13
+    ROW_SIZE_8BIT = 80
 
     def __init__(self):
-        self.frame_arr = np.zeros((Y_LENGTH_IMAGE, X_LENGTH_IMAGE), dtype=np.uint8)
+        self.frame_arr = np.zeros((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint8)
         self.telemetry = {}                                                 #Telemetry data for the frame
         self.stopped = False                                                
         self.frame_ready = False                                            
@@ -42,7 +43,7 @@ class Camera():
     def feed_row(self, bytearray_row):
         row = np.array(bytearray_row, dtype=np.uint8)
         if len(row) > 0:
-            if len(row) <= TWO_BYTES_ROW:
+            if len(row) <= self.ROW_SIZE_2BIT:
                 self._process_row(self._process_row_2b(row))
             else:
                 self._process_row(row)
@@ -68,10 +69,10 @@ class Camera():
         return row[:81] # remove the last 4 bytes
             
     def _process_row(self, row):
-        if(len(row) < EIGHT_BYTES_ROW):
+        if(len(row) < self.ROW_SIZE_8BIT):
             return
         n_row = row[0]
-        if n_row < Y_LENGTH:  # normal row
+        if n_row < self.MAX_DATA_ROW:  # normal row
             try:
                 reversed_row = row[1:][::-1]
                 # C code
@@ -105,12 +106,11 @@ class Camera():
         find_people(raw16b_flat_img, 3300, 3500, people_img)
 
         # create mask and colorized frame
-        print people_img
-        self.last_frame_mask = np.asarray(people_img, dtype=np.uint8).reshape(120,160)
+        self.last_frame_mask = np.asarray(people_img, dtype=np.uint8).reshape(self.IMAGE_HEIGHT,self.IMAGE_WIDTH)
         self.last_frame_stream = ia.applyCustomColorMap(self.last_frame)
 
         # remove data by filling the frame with zeros
-        self.frame_arr = np.zeros((Y_LENGTH_IMAGE, X_LENGTH_IMAGE), np.uint8)
+        self.frame_arr = np.zeros((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), np.uint8)
         self.frame_ready_callback()
     
     def on_frame_ready(self, callback):

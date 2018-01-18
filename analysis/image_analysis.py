@@ -3,32 +3,33 @@ applying custom colormaps, applying masks, calculating reference points, equaliz
 It also generates heatmaps, removes background, applies custom colormap. Additionally, it provides
 functionality to drop outliers and estimate amount of people from the frame.
 """
-import numpy as np
-import cv2
-import time, os
-from itertools import compress
 from copy import deepcopy
-from Constants import DIR
+from itertools import compress
+
+import cv2
+import numpy as np
+
+from Camera import Camera
 
 imagePath = "analysis/images/"
 
-def get_reference_raw(camera_name, frame):
-    """ Extracts region from a frame depending on a camera name and calculates mean value of the region.
-    Used for calibrating the range of human temperatures.
-
-    Args:
-        camera_name (str): name of the camera.
-        frame (numpy.2darray): grayscale frame received from the camera.
-
-    Returns:
-        float: The return value. Mean value of specified region.
-    """
-    reference_raw = None
-    if camera_name == "RESTAURANT2":
-        reference_raw = np.mean(frame[10:20, 146:156])
-    elif camera_name == "RESTAURANT1":
-        reference_raw = np.mean(frame[32:42, 143:153])
-    return reference_raw
+# def get_reference_raw(camera_name, frame):
+#     """ Extracts region from a frame depending on a camera name and calculates mean value of the region.
+#     Used for calibrating the range of human temperatures.
+#
+#     Args:
+#         camera_name (str): name of the camera.
+#         frame (numpy.2darray): grayscale frame received from the camera.
+#
+#     Returns:
+#         float: The return value. Mean value of specified region.
+#     """
+#     reference_raw = None
+#     if camera_name == "RESTAURANT2":
+#         reference_raw = np.mean(frame[10:20, 146:156])
+#     elif camera_name == "RESTAURANT1":
+#         reference_raw = np.mean(frame[32:42, 143:153])
+#     return reference_raw
 
 def extract_grayscale(frame, human_mask):
     """ Extracts all regions identified within the range of human temperatures.
@@ -314,14 +315,14 @@ def make_heatmap_grayscale(frame_list):
     histogram equalization, removes background and saves file.
 
     Args:
-        frame_list (list): list of frames collected during last period. 
+        frame_list (list): list of FLAT(1d-array) frames collected during last period.
 
     Returns:
         heatmap_grayscale (numpy.2darray): The return value. Grayscale image of regions with
         human temperatures.
     """
-    heatmap_grayscale = np.sum(frame_list, 0)/len(frame_list)
-    heatmap_grayscale = np.asarray([int(x) for x in heatmap_grayscale],dtype=np.uint8).reshape(120,160)
+
+    heatmap_grayscale = np.mean(frame_list, 0).astype(np.uint8).reshape(Camera.IMAGE_HEIGHT,Camera.IMAGE_WIDTH)
     heatmap_grayscale = hist_equalization(heatmap_grayscale)
     colored_heatmap = applyCustomColorMap(heatmap_grayscale, cmap="inferno_cropped", reverse=True)
     colored_heatmap = cv2.resize(colored_heatmap, None, fx=4, fy=4, interpolation=cv2.INTER_LINEAR)

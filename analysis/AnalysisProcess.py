@@ -62,10 +62,6 @@ class AnalysisProcess(Process):
         Gets last frame from the camera, sends corresponding images to invoke stream or analyze threads.
         Every 5 minutes starts new thread to write data to the database.
         """
-        #Read and encode stream image (rescaled according to raw_set values, equalized histogram, applied color map)
-        img = self.camera.last_frame_stream
-        img = cv2.imencode('.jpg', img)[1].tostring()
-
 
         # Time conditions to create heatmap
         delta = time.time() - self.last_hetmap_time
@@ -87,12 +83,12 @@ class AnalysisProcess(Process):
         # Drop outliers created by camera calibration from both lists
         people_list, frame_list = ia.drop_outliers(self.people_list, self.frame_list)
         if(len(frame_list) != 0):
-            heatmap = ia.make_heatmap_grayscale(np.asarray(frame_list).reshape(len(frame_list), -1))
+            narr = np.asarray(frame_list).reshape(len(frame_list), -1)
+            heatmap = ia.make_heatmap_grayscale(narr)
             # post data using http
             self._submitData(people_list[-1])
 
         #Cleaning list of frames and people
-        #print self.people_list
         self.frame_list = []
         self.people_list = []
 
