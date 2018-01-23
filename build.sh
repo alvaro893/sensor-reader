@@ -14,12 +14,13 @@ date >> "$logfile"
 echo "make all files in service_files executable..."
 chmod -R +x "$service_files_path"
 
+
+echo "run main script and log it"
+"$service_files_path/main-script.sh" |& tee -a "$logfile"
+
 echo "Build Cython code..."
 cd analysis
 python setup.py build_ext -b ..
 cd ..
-
-echo "run main script and log it"
-"$service_files_path/main-script.sh" |& tee -a "$logfile"
 
 echo "------Build.sh script done" |& tee -a "$logfile"
