@@ -1,8 +1,6 @@
-from fileinput import close
-from httplib import HTTPConnection, HTTPException
 import logging
+from httplib import HTTPConnection
 from threading import Thread
-from time import sleep
 
 from Constants import URL, CAMERA_NAME, PORT
 
@@ -10,7 +8,7 @@ from Constants import URL, CAMERA_NAME, PORT
 # timeout for each request will be 1 sec
 class HttpClient(HTTPConnection):
     def __init__(self):
-        HTTPConnection.__init__(self, URL, PORT, timeout=1)
+        HTTPConnection.__init__(self, URL, PORT, timeout=2)
 
     def reconnect(self):
         self.close()
@@ -40,7 +38,7 @@ class HttpClient(HTTPConnection):
             try:
                 requestCallback(); responseCallback()
             except Exception as e:
-                logging.error("http error: %s" + e.message)
+                logging.error("HTTP: %s",e)
                 self.reconnect()
 
         t = Thread(target=target)

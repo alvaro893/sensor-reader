@@ -4,3 +4,5 @@ psutil==5.2.2
 subprocess32==3.2.7
 wsaccel==0.6.2
 cython==0.27.3
+numpy
+pytz

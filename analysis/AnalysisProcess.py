@@ -4,14 +4,13 @@ import time
 from Queue import Queue
 from multiprocessing import Process
 
-import cv2
 import numpy as np
 import psutil
 
 import image_analysis as ia
 import time_utils
 from Camera import Camera
-from Constants import CAMERA_NAME, HEATMAP_PATH, MAX_HOUR, MAX_MIN
+from Constants import CAMERA_NAME, HEATMAP_PATH, MAX_HOUR
 from Constants import HIGH_PRIORITY
 from httpClient import HttpClient
 

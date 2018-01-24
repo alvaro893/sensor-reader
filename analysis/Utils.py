@@ -1,9 +1,10 @@
 import argparse
 import glob
+import logging
 import sys
 
-import logging
 import serial
+
 
 # Define miscellaneous functions
 

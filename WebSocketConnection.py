@@ -1,10 +1,9 @@
 #!/usr/bin/python
 import logging
 import thread
-from Queue import Queue
 
-import time
 from websocket import WebSocketApp, ABNF, WebSocketException
+
 from Constants import URL, CAMERA_PATH, PARAMETERS, PORT
 from Raspberry_commands import is_raspberry_command, resetsensor
 

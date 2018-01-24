@@ -4,7 +4,7 @@ from multiprocessing import Process
 from time import sleep
 
 import psutil
-from serial import Serial, SerialException, STOPBITS_ONE, EIGHTBITS, PARITY_NONE
+from serial import Serial, SerialException
 
 from Constants import VERY_HIGH_PRIORITY, SENSOR_DELAY, SENSOR_MAX_THRESHOLD, SENSOR_MIN_THRESHOLD
 

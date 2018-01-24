@@ -4,7 +4,6 @@
 import logging
 from logging.handlers import RotatingFileHandler
 
-import Constants
 from analysis.AnalysisProcess import AnalysisProcess
 
 formatter = logging.Formatter("%(levelname)s [%(asctime)s %(filename)s:%(lineno)s - %(funcName)s() ] %(message)s")
@@ -25,7 +24,7 @@ import os
 from DetectSerialPorts import serial_ports
 from Serial_reader import Serial_reader
 from WebSocketConnection import WebSocketConnection
-from multiprocessing import Process, Pipe
+from multiprocessing import Pipe
 from Constants import HIGH_PRIORITY
 
 __author__ = 'Alvaro'

@@ -1,6 +1,8 @@
-from thread import start_new_thread
-from subprocess32 import call
 import logging
+from thread import start_new_thread
+
+from subprocess32 import call
+
 
 def shutdown():
     run_command_async("/sbin/poweroff")

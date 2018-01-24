@@ -1,5 +1,6 @@
-import pytz, logging, os, time
-from datetime import datetime, timedelta
+from datetime import datetime
+
+import pytz
 
 LOCAL_TZ = pytz.timezone('Europe/Helsinki')
 
