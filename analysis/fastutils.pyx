@@ -1,8 +1,8 @@
 import cython
 from libc.math cimport ceil
 
-@cython.boundscheck(False)
-cpdef process_row(int n_row, unsigned char [:, :] frame_arr, unsigned char [:] row):
+#@cython.boundscheck(False)
+cpdef void process_row(int n_row, unsigned char [:, :] frame_arr, unsigned char [:] row):
     cdef int f_row, f_col, val, indx, size
     size = row.shape[0] # efficient len()
     for indx in range(0,size):
@@ -13,9 +13,9 @@ cpdef process_row(int n_row, unsigned char [:, :] frame_arr, unsigned char [:] r
 
 
 
-@cython.boundscheck(False)
-cpdef  find_people(unsigned short [:] in_flat_img, int people_min, int people_max, unsigned char [:] out_flat_img):
-    cpdef unsigned short x
+#@cython.boundscheck(False)
+cpdef void find_people(unsigned short [:] in_flat_img, int people_min, int people_max, unsigned char [:] out_flat_img):
+    cdef unsigned short x
     """
     Creates an image where everything in human temperature range is black and
     everything else is white.
@@ -34,13 +34,12 @@ cpdef  find_people(unsigned short [:] in_flat_img, int people_min, int people_ma
         else:
             out_flat_img[i] = 0
 
-@cython.boundscheck(False)
+#@cython.boundscheck(False)
 @cython.cdivision(True)
-cpdef rescale_to_raw(unsigned char [:]flat_img, int raw_min, int raw_max, unsigned short [:] out_img_flat):
+cpdef void rescale_to_raw(unsigned char [:]flat_img, int raw_min, int raw_max, unsigned short [:] out_img_flat):
     #If a frame doesn't have raw_min and raw_max set, assign predifined values
-    cpdef int leng
-    #cpdef unsigned char val
-    cpdef double x,old_min, old_max, old_range, new_range,val
+    cdef int leng
+    cdef double x,old_min, old_max, old_range, new_range,val
     leng = flat_img.shape[0]
     if raw_min == 0:
         raw_min = 3200
