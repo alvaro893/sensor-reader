@@ -1,8 +1,10 @@
 import logging
+
+import cv2
 import numpy as np
-import image_analysis as ia
 from analysis.fastutils import process_row, find_people, rescale_to_raw
-from Utils import int_to_bytes, from_bytes_to_int
+
+import image_analysis as ia
 
 """
 00 01 02 04 ------
@@ -19,7 +21,6 @@ so the image is 160 x 120 (20198 Bytes)
 """
 
 
-
 def nothing(): pass
 
 class Camera():
@@ -27,28 +28,29 @@ class Camera():
     IMAGE_WIDTH = 160
     IMAGE_HEIGHT = 120
     ROW_SIZE_2BIT = 13
-    ROW_SIZE_8BIT = 80
+    ROW_SIZE_8BIT = 81
 
     def __init__(self):
-        self.frame_arr = np.zeros((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint8)
-        self.telemetry = {}                                                 #Telemetry data for the frame
-        self.stopped = False                                                
-        self.frame_ready = False                                            
-        self.last_frame = self.frame_arr                                    #Grayscale image from camera
-        self.last_frame_mask = self.frame_arr                               #Extracted human temperature areas 
-        self.last_frame_stream = self.frame_arr                             #Image to be sent to the stream
-        self.frame_ready_callback = nothing                                 
-
+        self.frame_arr = np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint8)
+        self.last_frame16b = np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint16)
+        self.last_frame_mask = np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint8)
+        self.data_row = np.empty((self.ROW_SIZE_8BIT), dtype=np.uint8)
+        self.last_frame = np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint8)        #Grayscale image from camera
+        self.last_frame_stream = np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint8) #Image to be sent to the stream
+        self.telemetry = {}
+        self.stopped = False
+        self.frame_ready = False
+        self.frame_ready_callback = nothing
 
     def feed_row(self, bytearray_row):
-        row = np.array(bytearray_row, dtype=np.uint8)
-        if len(row) > 0:
-            if len(row) <= self.ROW_SIZE_2BIT:
-                self._process_row(self._process_row_2b(row))
-            else:
-                self._process_row(row)
-                #self.process_row(self.process_row_2b(raw_data))
-
+        self.data_row = np.asarray(bytearray_row, dtype=np.uint8)
+        # if self.data_row.shape[0] == self.ROW_SIZE_2BIT:
+        #     self._process_row(self._process_row_2b(bytearray_row))
+        if self.data_row.shape[0] == self.ROW_SIZE_8BIT:
+            self._process_row()
+            #self.process_row(self.process_row_2b(raw_data))
+        else:
+            logging.warn("row size is not correct:%d", self.data_row.shape[0])
     
     def _process_row_2b(self, raw_data):
         """ this method has to be used in process_row function. it generates
@@ -66,23 +68,16 @@ class Camera():
                 byte >>= 1
             row += (row_chunk)
         row.insert(0, n_row) # insert the rownumber
-        return row[:81] # remove the last 4 bytes
+        self._process_row(row[:81]) # remove the last 4 bytes
             
-    def _process_row(self, row):
-        if(len(row) < self.ROW_SIZE_8BIT):
-            return
-        n_row = row[0]
+    def _process_row(self):
+        n_row = self.data_row[0]
         if n_row < self.MAX_DATA_ROW:  # normal row
-            try:
-                reversed_row = row[1:][::-1]
-                # C code
-                process_row(n_row, self.frame_arr, reversed_row)
+            # C code
+            process_row(self.frame_arr, self.data_row)
 
-            except ValueError and IndexError as e:
-                logging.warn("row size is not suitable: %s", e.message)
-                
         else:  # last row is telemetry data, also we got the whole frame
-            self._process_telemetry(row)
+            self._process_telemetry(self.data_row)
             self._process_frame()
 
     def _process_frame(self):
@@ -91,27 +86,21 @@ class Camera():
         frame to be sent to the stream and frame where areas that fall into human temperature range are
         being black pixels and everything else being white pixels.
         """
-        self.last_frame = self.frame_arr[::-1]  #flip vertically
-        #
-        # in_data
-        flattened_image = self.last_frame.flatten() # in_data
-        # out_data
-        raw16b_flat_img = np.empty(flattened_image.shape, dtype=np.uint16)
-        # C function -- Extract regions with human temperatures
-        rescale_to_raw(flattened_image, self.telemetry['raw_min_set'], self.telemetry['raw_max_set'], raw16b_flat_img)
+        np.copyto(self.last_frame, self.frame_arr)
+        # generate the original 14bit image in a 16bit array
+        rescale_to_raw(self.last_frame16b, self.last_frame, self.telemetry['raw_min_set'], self.telemetry['raw_max_set'])
 
-        # out data
-        people_img = np.empty(raw16b_flat_img.shape, dtype=np.uint8)
-        # C function raw16b_flat_img is in_data --
-        find_people(raw16b_flat_img, 3300, 3500, people_img)
+        # generate masked image based on temperature range
+        find_people(self.last_frame_mask, self.last_frame16b, 3300, 3500)
+        # not beeing used yet
+        #self.last_frame_stream = ia.applyCustomColorMap(self.last_frame)
 
-        # create mask and colorized frame
-        self.last_frame_mask = np.asarray(people_img, dtype=np.uint8).reshape(self.IMAGE_HEIGHT,self.IMAGE_WIDTH)
-        self.last_frame_stream = ia.applyCustomColorMap(self.last_frame)
 
-        # remove data by filling the frame with zeros
-        self.frame_arr = np.zeros((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), np.uint8)
         self.frame_ready_callback()
+
+        # cv2.imshow('last_frame', cv2.resize(self.last_frame, (700,600), interpolation=cv2.INTER_CUBIC))
+        # cv2.imshow('last_frame_mask', cv2.resize(self.last_frame_mask, (700, 600), interpolation=cv2.INTER_CUBIC))
+        # cv2.waitKey(22)& 0xFF
     
     def on_frame_ready(self, callback):
         """ When a frame is generated the given callback will be executed"""

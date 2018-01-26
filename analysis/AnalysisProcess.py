@@ -19,15 +19,14 @@ class AnalysisProcess(Process):
     def __init__(self, pipe):
         Process.__init__(self, name="CameraAnalysisProcess")
         self.pipe = pipe
-        self.httpClient = HttpClient()
         self.frame_list = []  # List of grayscale people areas extracted from original frame
         self.people_list = []  # List of estimation for amount of people in a frame
-        self.last_npeople = 0  # Estimation for amount of people in the last frame
-        self.queue = Queue()  # Queue to hold frames to be sent to the stream
-        self.last_frame = None  # Frame to be sent to the stream
+        #self.last_npeople = 0  # Estimation for amount of people in the last frame
+        #self.queue = Queue()  # Queue to hold frames to be sent to the stream
         self.camera_name = CAMERA_NAME  # Camera name
         self.last_hetmap_time = 0
         # self.people_predictor = TimeSeriesPredictor() #Class for time series prediction of people
+        self.printoutTimer = 0;
 
         self.camera = Camera()
         self.camera.on_frame_ready(self._get_last_frame)
@@ -44,6 +43,14 @@ class AnalysisProcess(Process):
     # Process runs here
     def run(self):
         while True:
+            # if (time.time() - self.printoutTimer) > 10.0:
+            #     x = self.camera.last_frame.shape[0]
+            #     y = self.camera.last_frame.shape[1]
+            #     logging.info("---Analysis vars----\n" +
+            #                  "frame_list:%d \n people_list:%d  \n lastframe: (%d,%d) \n last_hetmap_time:%d",
+            #            len(self.frame_list), len(self.people_list),x,y,self.last_hetmap_time )
+            #     self.printoutTimer = time.time()
+
             # fix rows bigger than 84. some times there is more than 1 row
             # the following code makes sure we get all the rows
             data = bytearray(self.pipe.recv())
@@ -86,6 +93,7 @@ class AnalysisProcess(Process):
             heatmap = ia.make_heatmap_grayscale(narr)
             # post data using http
             self._submitData(people_list[-1])
+            self.last_npeople = people_list[-1]
 
         #Cleaning list of frames and people
         self.frame_list = []
@@ -112,8 +120,10 @@ class AnalysisProcess(Process):
 
     def _submitData(self, people):
         """Post processed data to server"""
-        self.httpClient.submitData(people)
-        time.sleep(0.05)
-        self.httpClient.submitImage(HEATMAP_PATH)
+        httpClient = HttpClient()
+        httpClient.submitImage(HEATMAP_PATH)
+        time.sleep(1)
+        httpClient.submitData(people)
+        httpClient.close()
 
 

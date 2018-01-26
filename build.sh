@@ -27,7 +27,7 @@ rm -f latest-OpenCV.deb
 
 echo "Build Cython code..."
 cd analysis
-python setup.py build_ext -b ..
+sudo python setup.py build_ext -b ..
 cd ..
 
 echo "------Build.sh script done" |& tee -a "$logfile"
