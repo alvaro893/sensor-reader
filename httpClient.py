@@ -6,6 +6,9 @@ from Constants import URL, CAMERA_NAME, PORT
 
 
 # timeout for each request will be 1 sec
+from analysis import Images
+
+
 class HttpClient(HTTPConnection):
     def __init__(self):
         HTTPConnection.__init__(self, URL, PORT, timeout=2)
@@ -26,6 +29,13 @@ class HttpClient(HTTPConnection):
             self._defaultResponse()
             imagefile.close()
         self._runAsync(lambda: self.request("POST", "/heatmap?camera_name="+CAMERA_NAME, imagefile, headers),
+                       responseCallback)
+
+    def submitImageBuffer(self, imgName):
+        buf = Images.getBufferedImage(imgName)
+        def responseCallback():
+            self._defaultResponse()
+        self._runAsync(lambda: self.request("POST", "/heatmap?camera_name="+CAMERA_NAME, buf, {"Content-Type":"image/png"}),
                        responseCallback)
 
     def _defaultResponse(self):

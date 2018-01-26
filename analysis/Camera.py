@@ -1,6 +1,5 @@
 import logging
 
-import cv2
 import numpy as np
 from analysis.fastutils import process_row, find_people, rescale_to_raw
 

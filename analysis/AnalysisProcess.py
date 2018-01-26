@@ -1,7 +1,7 @@
 import logging
 import thread
 import time
-from Queue import Queue
+import Images
 from multiprocessing import Process
 
 import numpy as np
@@ -21,16 +21,14 @@ class AnalysisProcess(Process):
         self.pipe = pipe
         self.frame_list = []  # List of grayscale people areas extracted from original frame
         self.people_list = []  # List of estimation for amount of people in a frame
-        #self.last_npeople = 0  # Estimation for amount of people in the last frame
-        #self.queue = Queue()  # Queue to hold frames to be sent to the stream
         self.camera_name = CAMERA_NAME  # Camera name
-        self.last_hetmap_time = 0
-        # self.people_predictor = TimeSeriesPredictor() #Class for time series prediction of people
-        self.printoutTimer = 0;
+        self.printoutTimer = 0
+        self.dataTimer = 0
 
         self.camera = Camera()
         self.camera.on_frame_ready(self._get_last_frame)
         self.daemon = True
+        self._read_mask_files()
         self.start()
         logging.info("Started Analysis process, pid:" + str(self.pid))
         try:
@@ -39,18 +37,11 @@ class AnalysisProcess(Process):
             logging.error("do not have permission to change priority!")
 
 
-
-    # Process runs here
     def run(self):
+        """
+        Process runs here. Receives data from Serial Process through a pipe
+        """
         while True:
-            # if (time.time() - self.printoutTimer) > 10.0:
-            #     x = self.camera.last_frame.shape[0]
-            #     y = self.camera.last_frame.shape[1]
-            #     logging.info("---Analysis vars----\n" +
-            #                  "frame_list:%d \n people_list:%d  \n lastframe: (%d,%d) \n last_hetmap_time:%d",
-            #            len(self.frame_list), len(self.people_list),x,y,self.last_hetmap_time )
-            #     self.printoutTimer = time.time()
-
             # fix rows bigger than 84. some times there is more than 1 row
             # the following code makes sure we get all the rows
             data = bytearray(self.pipe.recv())
@@ -68,28 +59,15 @@ class AnalysisProcess(Process):
         Gets last frame from the camera, sends corresponding images to invoke stream or analyze threads.
         Every 5 minutes starts new thread to write data to the database.
         """
-
-        # Time conditions to create heatmap
-        delta = time.time() - self.last_hetmap_time
-        hour = time_utils.get_hour()
-        minute = time_utils.get_minute()
-        hour_minute = time_utils.get_hour_minute()
-        weekday = time_utils.get_weekday()
-
-        # Remember that this disable heatmap after normal hours
-        max_hour = int(MAX_HOUR) or 15
-       # max_min = int(MAX_MIN) or 5
-        max_min = 1
-        condition_one = (max_hour > hour > 8) and minute % max_min == 0 and delta > 60
-        condition_two = hour_minute == '15:00' and delta > 60
-        if (condition_one or condition_two) and weekday < 5:
+        if(time.time() - self.dataTimer > 60):
             thread.start_new_thread(self._analyze_frame, ())
-            self.last_hetmap_time = time.time()
+            self.dataTimer = time.time()
 
         # Drop outliers created by camera calibration from both lists
         people_list, frame_list = ia.drop_outliers(self.people_list, self.frame_list)
         if(len(frame_list) != 0):
             narr = np.asarray(frame_list).reshape(len(frame_list), -1)
+            print "make heatmap with", len(frame_list), "frames",
             heatmap = ia.make_heatmap_grayscale(narr)
             # post data using http
             self._submitData(people_list[-1])
@@ -111,6 +89,7 @@ class AnalysisProcess(Process):
         if not self.people_list:
             self.people_list.append(n_people)
             self.frame_list.append(thresh_grayscale)
+
         #If lists are not empty checks if the new n_people value isn't abnormally different from the previous one
         if (self.people_list and np.absolute(n_people-self.people_list[-1]) < 10):
             self.people_list.append(n_people)
@@ -121,9 +100,13 @@ class AnalysisProcess(Process):
     def _submitData(self, people):
         """Post processed data to server"""
         httpClient = HttpClient()
-        httpClient.submitImage(HEATMAP_PATH)
+        # httpClient.submitImage(HEATMAP_PATH)
+        httpClient.submitImageBuffer(Images.colored_heatmap)
         time.sleep(1)
         httpClient.submitData(people)
         httpClient.close()
+
+    def _read_mask_files(self):
+        Images.load()
 
 

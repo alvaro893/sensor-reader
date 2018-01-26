@@ -10,8 +10,9 @@ import cv2
 import numpy as np
 
 from Camera import Camera
+from analysis import Images
 
-imagePath = "analysis/images/"
+imagePath = Images.imagePath
 
 # def get_reference_raw(camera_name, frame):
 #     """ Extracts region from a frame depending on a camera name and calculates mean value of the region.
@@ -163,11 +164,11 @@ def estimate_people_right_camera(thresh):
     BOT_HUMAN = 30
 
     #Load masks for top, mid and bottom regions
-    mask_bot = cv2.imread(imagePath + 'mask_bot.jpg', 0)
+    mask_bot = Images.get('mask_bot.jpg')
     mask_bot = np.logical_not(mask_bot)
-    mask_mid = cv2.imread(imagePath + 'mask_mid.jpg', 0)
+    mask_mid = Images.get('mask_mid.jpg')
     mask_mid = np.logical_not(mask_mid)
-    mask_top = cv2.imread(imagePath + 'mask_top.jpg', 0)
+    mask_top = Images.get('mask_top.jpg')
     mask_top = np.logical_not(mask_top)
 
     #Apply mask to every region
@@ -205,16 +206,16 @@ def applyMask(camera_name, img, **kwargs):
 
     #Load corresponding masks
     if camera_name == 'RESTAURANT1' and kwargs["cashier"]:
-        mask = cv2.imread(imagePath + 'mask_cabins.jpg', 0)
+        mask = Images.get(Images.mask_cabins)
     elif camera_name == 'RESTAURANT1' and not kwargs["cashier"]:
-        mask = cv2.imread(imagePath + 'mask_right.jpg', 0)
+        mask = Images.get(Images.mask_right)
     elif camera_name == 'RESTAURANT2' and kwargs["cashier"]==True:
-        mask = cv2.imread(imagePath + 'mask_cashier.jpg', 0)
+        mask = Images.get(Images.mask_cashier)
     elif camera_name == 'RESTAURANT2' and not kwargs["cashier"]:
-        mask = cv2.imread(imagePath + 'mask_main.jpg', 0)
+        mask = Images.get(Images.mask_main)
     else:
         # General case (no mask)
-        mask = cv2.imread(imagePath + 'white.png', 0)
+        mask = Images.get(Images.white)
 
     #Create boolean mask and apply to the image   
     mask = np.logical_not(mask)
@@ -299,7 +300,7 @@ def applyCustomColorMap(im_gray, **kwargs):
     img = cv2.cvtColor(im_gray, cv2.COLOR_GRAY2BGR);
 
     #Load image to create a color map from
-    lut = cv2.imread(imagePath + kwargs["cmap"]+'.jpg', 1)
+    lut = Images.get(kwargs["cmap"])
     lut = np.asarray(lut, dtype=np.uint8)
     #Reverse if needed
     if kwargs["reverse"]:
@@ -324,10 +325,11 @@ def make_heatmap_grayscale(frame_list):
 
     heatmap_grayscale = np.mean(frame_list, 0).astype(np.uint8).reshape(Camera.IMAGE_HEIGHT,Camera.IMAGE_WIDTH)
     heatmap_grayscale = hist_equalization(heatmap_grayscale)
-    colored_heatmap = applyCustomColorMap(heatmap_grayscale, cmap="inferno_cropped", reverse=True)
-    colored_heatmap = cv2.resize(colored_heatmap, None, fx=4, fy=4, interpolation=cv2.INTER_LINEAR)
+    colored_heatmap = applyCustomColorMap(heatmap_grayscale, cmap=Images.inferno_cropped, reverse=True)
+    #colored_heatmap = cv2.resize(colored_heatmap, None, fx=4, fy=4, interpolation=cv2.INTER_LINEAR)
     colored_heatmap = remove_bg(colored_heatmap, cmap="inferno_cropped", reverse=True)
-    cv2.imwrite(imagePath + "colored_heatmap.png", colored_heatmap)
+    #cv2.imwrite(imagePath + "colored_heatmap.png", colored_heatmap)
+    Images.put("colored_heatmap.png", colored_heatmap)
     return heatmap_grayscale
 
 def remove_bg(colored_heatmap, **kwargs):
