@@ -9,6 +9,7 @@ import psutil
 
 import image_analysis as ia
 import time_utils
+import MqttClient
 from Camera import Camera
 from Constants import CAMERA_NAME, HEATMAP_PATH, MAX_HOUR
 from Constants import HIGH_PRIORITY
@@ -99,6 +100,7 @@ class AnalysisProcess(Process):
 
     def _submitData(self, people):
         """Post processed data to server"""
+        MqttClient.submit_data(people, 'people')
         httpClient = HttpClient()
         # httpClient.submitImage(HEATMAP_PATH)
         httpClient.submitImageBuffer(Images.colored_heatmap)
