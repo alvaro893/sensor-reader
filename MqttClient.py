@@ -11,7 +11,7 @@ group = "DM.NIP.ESPOO"
 user = "ALVAROBOLRO"
 reportingPeriod = 15
 endPointClientName = 0006700001
-serialNumber = "urn:sku:thermal-001"
+serialNumber = "thermalcam:" + 'TEST02'
 object = "thermal"
 instance = "0"
 resource = "peopleCounter"
@@ -37,8 +37,17 @@ def on_subcribe(client, userdata, mid, granted_qos):
 
 def submit_data(data, resource):
     topic = "{0}/{1}/{2}/{3}/{4}".format(token, serialNumber, object, instance, resource)
-    print "publishing topic:" + topic, "data:"+str(data)
+    print "publishing topic:" + topic
+    if type(data) != 'bytearray': print "data:"+str(data)
     client.publish(topic, data)
+
+def submit_telemetry(telemetry):
+    object = 'telemetry'
+    for k,v in telemetry.iteritems():
+        resource = "".join(k.split('_'))
+        topic = "{0}/{1}/{2}/{3}/{4}".format(token, serialNumber, object, instance, resource)
+        # print "publishing topic:" + topic, "data:"+str(v)
+        client.publish(topic, str(v))
 
 def topic_notify():
     topic = "IMPACT/REQUEST/ROUTER/MQTT"
@@ -69,7 +78,7 @@ def register_device():
 client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
-client.on_publish = on_publish
+# client.on_publish = on_publish
 client.on_subscribe = on_subcribe
 
 client.username_pw_set(user, secret)
