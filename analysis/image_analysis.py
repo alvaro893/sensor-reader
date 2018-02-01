@@ -32,7 +32,23 @@ imagePath = Images.imagePath
 #         reference_raw = np.mean(frame[32:42, 143:153])
 #     return reference_raw
 
-def extract_grayscale(frame, human_mask):
+# def extract_grayscale(frame, human_mask):
+#     """ Extracts all regions identified within the range of human temperatures.
+#
+#     Args:
+#         frame (numpy.2darray): grayscale frame received from the camera.
+#         human_mask (numpy.2darray): Bitmap representation of the frame where all people are black and everything else is white.
+#
+#     Returns:
+#         numpy.2darray: The return value. Frame where humans are grayscale and everything else is white.
+#     """
+#     mask = (255-human_mask)     #Invert mask
+#     mask = np.logical_not(mask) #Create boolean mask
+#     frame[mask] = 255           #Color everything except human regions in white
+#     return frame
+
+
+def extract_grayscale(heatmap, human_mask):
     """ Extracts all regions identified within the range of human temperatures.
 
     Args:
@@ -44,8 +60,8 @@ def extract_grayscale(frame, human_mask):
     """
     mask = (255-human_mask)     #Invert mask
     mask = np.logical_not(mask) #Create boolean mask
-    frame[mask] = 255           #Color everything except human regions in white
-    return frame
+    heatmap[mask] = 255           #Color everything except human regions in white
+    return heatmap
 
 def drop_outliers(*args):
     '''

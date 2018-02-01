@@ -50,9 +50,9 @@ cpdef void find_people(unsigned char [:,:] dst_img, unsigned short [:,:] src_img
         y = indx % width
         val = src_img[x, y]
         if (val < people_max and val > people_min):
-            dst_img[x, y] = 255
-        else:
             dst_img[x, y] = 0
+        else:
+            dst_img[x, y] = 255
 
 @cython.boundscheck(False)
 @cython.cdivision(True)

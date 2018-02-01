@@ -1,5 +1,6 @@
 import logging
 
+import cv2
 import numpy as np
 from analysis.fastutils import process_row, find_people, rescale_to_raw
 
@@ -90,7 +91,7 @@ class Camera():
         rescale_to_raw(self.last_frame16b, self.last_frame, self.telemetry['raw_min_set'], self.telemetry['raw_max_set'])
 
         # generate masked image based on temperature range
-        find_people(self.last_frame_mask, self.last_frame16b, 3300, 3500)
+        find_people(self.last_frame_mask, self.last_frame16b, 3800, 4300)
         # not beeing used yet
         #self.last_frame_stream = ia.applyCustomColorMap(self.last_frame)
 
@@ -110,21 +111,21 @@ class Camera():
         if (len(data) < 40):
             return
         telemetry = {}
-        # telemetry['time_counter'] =           from_bytes_to_int( data[5:3:-1] + data[2:0:-1])
-        # telemetry['frame_counter'] =          from_bytes_to_int( data[11:9:-1] + data[8:6:-1] )
-        # telemetry['frame_mean'] =             from_bytes_to_int( data[14:12:-1] )
-        # telemetry['fpa_temp'] =               from_bytes_to_int( data[17:15:-1] )
-        # telemetry['raw_max'] =                from_bytes_to_int( data[20:18:-1] )
-        # telemetry['raw_min'] =                from_bytes_to_int( data[23:21:-1] )
-        # telemetry['discard_packets_count'] =  from_bytes_to_int( data[26:24:-1] )
+        telemetry['time_counter'] =           (data[1] & 0xff) + (data[2] << 8 )+(data[4] & 0xff) + (data[5] << 8)
+        telemetry['frame_counter'] =          (data[7] & 0xff) + (data[8] << 8 )+(data[10] & 0xff) + (data[11] << 8)
+        telemetry['frame_mean'] =             (data[13] & 0xff) + (data[14] << 8 )
+        telemetry['fpa_temp'] =               (data[16] & 0xff) + (data[17] << 8 )
+        telemetry['raw_max'] =                (data[19] & 0xff) + (data[20] << 8 )
+        telemetry['raw_min'] =                  (data[22] & 0xff) + (data[23] << 8 )
+        telemetry['discard_packets'] =          (data[25] & 0xff) + (data[26] << 8 )
         telemetry['raw_max_set'] =              (data[28] & 0xff) + (data[29] << 8)
         telemetry['raw_min_set'] =              (data[31] & 0xff) + (data[32] << 8)
         # telemetry['agc'] =                    '{:02d}'.format( data[34] )
-        # telemetry['bit_depth'] =              '{:01d} bits'.format( data[35] )
-        # telemetry['frame_delay'] =            from_bytes_to_int( data[38:36:-1] )
+        telemetry['bit_depth'] =                 data[35]
+        telemetry['frame_delay'] =              (data[37] & 0xff) + (data[38] << 8)
         # telemetry['time_counter2'] =            from_bytes_to_int( data[44:42:-1] + data[41:39:-1] )
         # telemetry['frame_state'] =             str(data[46])
-        # telemetry['sensor_version'] =             str(data[47]/10.0)
+        telemetry['sensor_version'] =            str(data[47]/10.0)
         self.telemetry = telemetry
 
         

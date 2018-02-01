@@ -23,11 +23,17 @@ try:
         SENSOR_DELAY = data.get("SENSOR_DELAY") or 500
         SENSOR_MAX_THRESHOLD = data.get("SENSOR_MAX_THRESHOLD")
         SENSOR_MIN_THRESHOLD =  data.get("SENSOR_MIN_THRESHOLD")
+        HEATMAP_SECONDS =      data.get("HEATMAP_SECONDS") or 60
 except Exception:
     logging.error("no .env.json file")
     exit(1)
 
 PARAMETERS = "?pass=%s&camera_name=%s" % (PASS, CAMERA_NAME)
+
+# IMPACT
+IMPACT_URL = "api.impact.nokia-innovation.io"
+IMPACT_GROUP = "DM.NIP.ESPOO"
+IMPACT_SERIAL_NUMBER = "thermalcam:"+CAMERA_NAME
 
 PORT_LINUX = '/dev/ttyACM0', '/dev/ttyACM1'
 PORT_WINDOWS = 'COM4', 'COM5'

@@ -2,19 +2,18 @@ import json
 
 import paho.mqtt.client as mqtt
 import thread
+import Constants
+import Cache
 
-#url = "api.iot.nokia.com"
-url = "api.impact.nokia-innovation.io"
-token = "1iuqfwuzahqap"
-secret = "F1/xN3eVGu1DjZLO6q3BnbCAYImv4Jbm2WVimwzTmJo="
-group = "DM.NIP.ESPOO"
-user = "ALVAROBOLRO"
+url = Constants.IMPACT_URL
+group = Constants.IMPACT_GROUP
+token = Cache.TOKEN
+secret = Cache.SECRET
+user = Cache.USER
+serialNumber = Constants.IMPACT_SERIAL_NUMBER
+INSTANCE = "0"
+
 reportingPeriod = 15
-endPointClientName = 0006700001
-serialNumber = "thermalcam:" + 'TEST02'
-object = "thermal"
-instance = "0"
-resource = "peopleCounter"
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
@@ -22,7 +21,7 @@ def on_connect(client, userdata, flags, rc):
 
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
-    client.subscribe("{0}/{1}/{2}/{3}/{4}".format(token, object, instance, reportingPeriod, serialNumber))
+    client.subscribe("{0}/{1}/{2}/{3}/{4}".format(token, object, INSTANCE, reportingPeriod, serialNumber))
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
@@ -36,16 +35,17 @@ def on_subcribe(client, userdata, mid, granted_qos):
 
 
 def submit_data(data, resource):
-    topic = "{0}/{1}/{2}/{3}/{4}".format(token, serialNumber, object, instance, resource)
+    object = "Analysis"
+    topic = "{0}/{1}/{2}/{3}/{4}".format(token, serialNumber, object, INSTANCE, resource)
     print "publishing topic:" + topic
     if type(data) != 'bytearray': print "data:"+str(data)
     client.publish(topic, data)
 
 def submit_telemetry(telemetry):
-    object = 'telemetry'
+    object = 'Telemetry'
     for k,v in telemetry.iteritems():
         resource = "".join(k.split('_'))
-        topic = "{0}/{1}/{2}/{3}/{4}".format(token, serialNumber, object, instance, resource)
+        topic = "{0}/{1}/{2}/{3}/{4}".format(token, serialNumber, object, INSTANCE, resource)
         # print "publishing topic:" + topic, "data:"+str(v)
         client.publish(topic, str(v))
 

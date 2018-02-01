@@ -1,4 +1,6 @@
 """ Module to cash all the images that are used several times"""
+import logging
+
 import cv2
 
 imagePath = "analysis/images/"
@@ -19,7 +21,7 @@ white = imagePath + 'white.png'
 inferno_cropped = imagePath + 'inferno_cropped.jpg'
 
 # cached images (should not be written)
-colored_heatmap = 'colored_heatmap.png'
+_colored_heatmap = 'colored_heatmap.png'
 
 
 def load():
@@ -40,7 +42,12 @@ def get(imgPath):
 
 def getBufferedImage(name):
     img = imgDict[name]
-    retval, buf = cv2.imencode('.png', img, [cv2.IMWRITE_PNG_COMPRESSION, 8])
+    try:
+        retval, buf = cv2.imencode('.png', img, [cv2.IMWRITE_PNG_COMPRESSION, 1])
+    except Exception as e:
+        logging.error("could not load image")
+        return 0
+
     return buf
 
 def put(name, img):

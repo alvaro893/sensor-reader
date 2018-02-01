@@ -38,6 +38,26 @@ class HttpClient(HTTPConnection):
         self._runAsync(lambda: self.request("POST", "/heatmap?camera_name="+CAMERA_NAME, buf, {"Content-Type":"image/png"}),
                        responseCallback)
 
+    def getImageFrom(self, pathOfFile, camera_name):
+        def responseCallback():
+            response = self.getresponse()
+            with(open(pathOfFile, mode='w')) as fp:
+                fp.write(response.read())
+
+        self._runAsync(lambda: self.request("GET",
+                                            "/heatmap?camera_name=" + camera_name,
+                                            headers={"Content-Type": "image/png"}), responseCallback)
+
+    def getPeopleCounter(self, camera_name, dataCallback):
+        def responseCallback():
+            response = self.getresponse()
+            people_counter = int(response.read())
+            dataCallback(people_counter)
+
+        self._runAsync(lambda: self.request("GET",
+                                            "/people_count?camera_name=" + camera_name,
+                                            headers={"Content-Type": "text/plain"}), responseCallback)
+
     def _defaultResponse(self):
         res = self.getresponse()
         data = res.read()
