@@ -180,11 +180,11 @@ def estimate_people_right_camera(thresh):
     BOT_HUMAN = 30
 
     #Load masks for top, mid and bottom regions
-    mask_bot = Images.get('mask_bot.jpg')
+    mask_bot = Images.get(Images.mask_bot)
     mask_bot = np.logical_not(mask_bot)
-    mask_mid = Images.get('mask_mid.jpg')
+    mask_mid = Images.get(Images.mask_mid)
     mask_mid = np.logical_not(mask_mid)
-    mask_top = Images.get('mask_top.jpg')
+    mask_top = Images.get(Images.mask_top)
     mask_top = np.logical_not(mask_top)
 
     #Apply mask to every region
