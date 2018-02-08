@@ -11,26 +11,33 @@ import numpy as np
 import psutil
 
 import image_analysis as ia
+import server
 import time_utils
 import MqttClient
 from Camera import Camera
-from Constants import CAMERA_NAME, HEATMAP_SECONDS
-from Constants import HIGH_PRIORITY
-from httpClient import HttpClient
+from Constants import *
+import httpClient
 
 
 class AnalysisProcess(Process):
     def __init__(self, pipe):
         Process.__init__(self, name="CameraAnalysisProcess")
         self.mean = np.zeros((Camera.IMAGE_HEIGHT, Camera.IMAGE_WIDTH), dtype=np.uint32)
-        self.masked_heatmap = np.empty((Camera.IMAGE_HEIGHT, Camera.IMAGE_WIDTH), dtype=np.uint8)
+
+
         self.meanCounter = 0
+        self.n_people = 0
         self.pipe = pipe
         self.frame_list = []  # List of grayscale people areas extracted from original frame
         self.people_list = []  # List of estimation for amount of people in a frame
         self.camera_name = CAMERA_NAME  # Camera name
-        self.printoutTimer = 0
-        self.dataTimer = 0
+        self.heatmapTimer = time.time()
+        self.movementTimer = time.time()
+        self.hTemperatureTimer = time.time()
+        self.submitTimer = time.time()
+        self.movement_detected = False
+        self.high_temperature_detected = False
+
 
         self.camera = Camera()
         self.camera.on_frame_ready(self._get_last_frame)
@@ -48,6 +55,10 @@ class AnalysisProcess(Process):
         """
         Process runs here. Receives data from Serial Process through a pipe
         """
+
+        # Motion jpeg server
+        thread.start_new(server.startup, (self.camera,))
+
         while True:
             # fix rows bigger than 84. some times there is more than 1 row
             # the following code makes sure we get all the rows
@@ -68,23 +79,48 @@ class AnalysisProcess(Process):
         """
         self.mean += self.camera.last_frame
         self.meanCounter += 1
-        
-        if(time.time() - self.dataTimer > HEATMAP_SECONDS):
+        t = time.time()
+
+        if(t - self.heatmapTimer > HEATMAP_SECONDS):
             self.mean /= self.meanCounter
             self.n_people = ia.process_image(self.camera.last_frame_mask, self.camera_name)
-            self.masked_heatmap = ia.extract_grayscale(self.mean.astype(dtype=np.uint8), self.camera.last_frame_mask)
-            # cv2.imshow('last_frame', cv2.resize(self.camera.last_frame, (700,600), interpolation=cv2.INTER_CUBIC))
-            # cv2.imshow('tr', cv2.resize(self.masked_heatmap, (700,600), interpolation=cv2.INTER_CUBIC))
-            # cv2.waitKey(22)& 0xFF
+            self.camera.masked_heatmap = ia.extract_grayscale(self.mean.astype(dtype=np.uint8), self.camera.last_frame_mask)
 
             self.makeHeatmap()
             #thread.start_new_thread(self._analyze_frame, ())
-            self._submitData()
             #cleaning
             self.mean.fill(0)
-            print self.meanCounter
+            logging.info("heatmap created with %d frames", self.meanCounter)
+            self._submitHeatmap()
             self.meanCounter = 0
-            self.dataTimer = time.time()
+            self.heatmapTimer = t
+
+        if t - self.submitTimer > 10:
+            self._submitData()
+            self.submitTimer = t
+
+        if t - self.movementTimer > 1:
+            # detect movement
+            average_val = np.sum(self.camera.bg_subscration_frame) / float(Camera.IMAGE_N_PIXELS)
+            self.movement_detected = average_val > MD_SENSITIVITY
+            # print average_val
+            if self.movement_detected: logging.debug("---movement detected----")
+            self.movementTimer = t
+
+        if t - self.hTemperatureTimer > 2:
+            # high temperature alarm
+            self.high_temperature_detected = self.camera.telemetry['raw_max'] > HIGH_TEMPERATURE_ALARM
+            if(self.high_temperature_detected): logging.debug("---danger of fire detected-----")
+            self.hTemperatureTimer = t
+
+
+        # bg substraction
+        #np.copyto(self.camera.bg_subscration_frame, self.camera.last_frame)
+
+
+        # cv2.imshow('bg_subscration_frame', cv2.resize(self.camera.bg_subscration_frame, (700,600), interpolation=cv2.INTER_CUBIC))
+        # cv2.imshow('tr', cv2.resize(self.camera.masked_heatmap, (700,600), interpolation=cv2.INTER_CUBIC))
+        # cv2.waitKey(22)& 0xFF
 
         # # Drop outliers created by camera calibration from both lists
         # people_list, frame_list = ia.drop_outliers(self.people_list, self.frame_list)
@@ -120,21 +156,26 @@ class AnalysisProcess(Process):
     #         self.frame_list.append(thresh_grayscale)
 
 
+    def _submitHeatmap(self):
+        def net_thread_func():
+            httpClient.submitImageBuffer(Images._colored_heatmap)
+            logging.info("done submitting heatmap")
+        thread.start_new(net_thread_func, ())
+
 
     def _submitData(self):
         """Post processed data to server"""
-        def mqtt():
+        def net_thread_func():
             MqttClient.submit_data(self.n_people, 'people')
+            MqttClient.submit_data(str(self.high_temperature_detected), 'firedetection')
+            MqttClient.submit_data(str(self.movement_detected), 'movementdetection')
             # image_heatmap = bytearray(Images.getBufferedImage(Images._colored_heatmap))
             # MqttClient.submit_data(image_heatmap.__str__(), 'heatmap')
             MqttClient.submit_telemetry(self.camera.telemetry)
-        thread.start_new(mqtt, ())
-        httpClient = HttpClient()
-        # httpClient.submitImage(HEATMAP_PATH)
-        httpClient.submitImageBuffer(Images._colored_heatmap)
-        time.sleep(0.001)
-        httpClient.submitData(self.n_people)
-        httpClient.close()
+
+            httpClient.submitData(self.n_people,"people_count")
+            logging.info("done submitting data")
+        thread.start_new(net_thread_func, ())
 
     def _read_mask_files(self):
         Images.load()
@@ -143,7 +184,7 @@ class AnalysisProcess(Process):
 
         # improve contrast
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(4, 4))
-        clahe = clahe.apply(self.masked_heatmap)
+        clahe = clahe.apply(self.camera.masked_heatmap)
 
         colored_heatmap = ia.applyCustomColorMap(clahe, cmap=Images.inferno_cropped, reverse=True)
         #colored_heatmap = cv2.resize(colored_heatmap, None, fx=4, fy=4, interpolation=cv2.INTER_CUBIC)

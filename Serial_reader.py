@@ -43,9 +43,8 @@ class Serial_reader(Serial):
     def _send_data_loop(self):
         # blocks on receiving data from pipe
         while self.is_open:
-            print "waiting for commands"
             data = self.network_pipe.recv()
-            print data
+            logging.info("received data:" + str(data))
             self.write(data)
 
     def _send_initial_commands(self):

@@ -27,16 +27,20 @@ class Camera():
     MAX_DATA_ROW = 240
     IMAGE_WIDTH = 160
     IMAGE_HEIGHT = 120
+    IMAGE_N_PIXELS = IMAGE_WIDTH*IMAGE_HEIGHT
     ROW_SIZE_2BIT = 13
     ROW_SIZE_8BIT = 81
 
     def __init__(self):
-        self.frame_arr = np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint8)
-        self.last_frame16b = np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint16)
-        self.last_frame_mask = np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint8)
-        self.data_row = np.empty((self.ROW_SIZE_8BIT), dtype=np.uint8)
-        self.last_frame = np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint8)        #Grayscale image from camera
-        self.last_frame_stream = np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint8) #Image to be sent to the stream
+        self.frame_arr =            np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint8)
+        self.last_frame_mask =      np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint8)
+        self.last_frame =           np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint8)        #Grayscale image from camera
+        self.last_frame_stream =    np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint8) #Image to be sent to the stream
+        self.bg_subscration_frame = np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint8)
+        self.masked_heatmap =       np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint8)
+        self.last_frame16b =        np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint16)
+        self.data_row =             np.empty((self.ROW_SIZE_8BIT), dtype=np.uint8)
+        self.substractor = cv2.createBackgroundSubtractorMOG2(history=100,detectShadows=False,varThreshold=10)
         self.telemetry = {}
         self.stopped = False
         self.frame_ready = False
@@ -94,6 +98,8 @@ class Camera():
         find_people(self.last_frame_mask, self.last_frame16b, 3800, 4300)
         # not beeing used yet
         #self.last_frame_stream = ia.applyCustomColorMap(self.last_frame)
+
+        self.bg_subscration_frame = self.substractor.apply(self.last_frame)
 
 
         self.frame_ready_callback()

@@ -22,6 +22,7 @@ inferno_cropped = imagePath + 'inferno_cropped.jpg'
 
 # cached images (should not be written)
 _colored_heatmap = 'colored_heatmap.png'
+_frame = 'frame.jpg'
 
 
 def load():
@@ -43,12 +44,15 @@ def get(imgPath):
 def getBufferedImage(name):
     img = imgDict[name]
     try:
+        img = imgDict[name]
         retval, buf = cv2.imencode('.png', img, [cv2.IMWRITE_PNG_COMPRESSION, 1])
     except Exception as e:
         logging.error("could not load image")
-        return 0
+        retval = False
+        buf = ""
 
-    return buf
+    return retval, buf
+
 
 def put(name, img):
     imgDict[name] = img

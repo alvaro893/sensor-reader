@@ -24,6 +24,8 @@ try:
         SENSOR_MAX_THRESHOLD = data.get("SENSOR_MAX_THRESHOLD")
         SENSOR_MIN_THRESHOLD =  data.get("SENSOR_MIN_THRESHOLD")
         HEATMAP_SECONDS =      data.get("HEATMAP_SECONDS") or 60
+        HIGH_TEMPERATURE_ALARM = data.get("HIGH_TEMPERATURE_ALARM") or 10000
+        MD_SENSITIVITY         = data.get("MD_SENSITIVITY") or 5.0
 except Exception:
     logging.error("no .env.json file")
     exit(1)

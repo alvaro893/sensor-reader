@@ -1,19 +1,29 @@
 #!/usr/bin/python
 
-### logging config
 import logging
 from logging.handlers import RotatingFileHandler
 
+import sys
+
+import thread
+from threading import Thread
+
+import server
 from analysis.AnalysisProcess import AnalysisProcess
 
+### logging to file and stdout
 formatter = logging.Formatter("%(levelname)s [%(asctime)s %(filename)s:%(lineno)s - %(funcName)s() ] %(message)s")
 LOGFILE = 'logs.log'
-my_handler = RotatingFileHandler(LOGFILE, mode='a', maxBytes=1*1024*1024, backupCount=1, encoding=None, delay=0)
-my_handler.setFormatter(formatter)
-my_handler.setLevel(logging.INFO)
+file_handler = RotatingFileHandler(LOGFILE, mode='a', maxBytes=1 * 1024 * 1024, backupCount=1, encoding=None, delay=0)
+file_handler.setFormatter(formatter)
+file_handler.setLevel(logging.INFO)
+std_handler = logging.StreamHandler(sys.stdout)
+std_handler.setLevel(logging.DEBUG)
+std_handler.setFormatter(formatter)
 app_log = logging.getLogger('') #using default logger
-app_log.addHandler(my_handler)
-app_log.setLevel(logging.INFO)
+app_log.addHandler(file_handler)
+app_log.addHandler(std_handler)
+app_log.setLevel(logging.DEBUG)
 ### end logging config
 
 import argparse
@@ -85,8 +95,8 @@ def main():
     try:
         while usb_serial.is_open:
             websocket.run_forever()
-            logging.warn("try to reconnect in 5 seconds")
-            time.sleep(5)
+            logging.warn("trying to reconnect to websocket...")
+            time.sleep(0.5)
     except KeyboardInterrupt or RuntimeError as e:
         usb_serial.close()
         exit(1)  # exit with error (it's supose to run forever)

@@ -79,3 +79,15 @@ cpdef void rescale_to_raw(unsigned short [:,:] dst_img, unsigned char [:,:] src_
         val = src_img[x, y]
         new_val = ceil(((val - old_min) * new_range) / old_range) + raw_min
         dst_img[x, y] = (int)(ceil(new_val))
+
+cdef extern from "native_serial.h":
+    init_native_serial(void (*callback)(unsigned char *, int n, void * udata), void * udata)
+
+def init_serial(f):
+    init_native_serial(callback, <void*>f)
+
+cdef void callback(unsigned char *buff, int n, void *f):
+    o = buff[:n]
+    (<object>f)(o)
+
+

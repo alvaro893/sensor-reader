@@ -1,4 +1,5 @@
 import json
+import logging
 
 import paho.mqtt.client as mqtt
 import thread
@@ -28,17 +29,16 @@ def on_message(client, userdata, msg):
     print(msg.topic+" "+str(msg.payload))
 
 def on_publish(client, userdata, mid):
-    print "published"
+    pass
 
 def on_subcribe(client, userdata, mid, granted_qos):
-    print "subscribed" , userdata,mid, granted_qos[0]
+    logging.info("subscribed to topic")# , userdata,mid, granted_qos[0]
 
 
 def submit_data(data, resource):
     object = "Analysis"
     topic = "{0}/{1}/{2}/{3}/{4}".format(token, serialNumber, object, INSTANCE, resource)
-    print "publishing topic:" + topic
-    if type(data) != 'bytearray': print "data:"+str(data)
+    logging.debug("publishing topic:" + topic)
     client.publish(topic, data)
 
 def submit_telemetry(telemetry):

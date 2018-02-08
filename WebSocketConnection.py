@@ -2,12 +2,12 @@
 import logging
 import thread
 
+import websocket
+
 from websocket import WebSocketApp, ABNF, WebSocketException
 
 from Constants import URL, CAMERA_PATH, PARAMETERS, PORT
 from Raspberry_commands import is_raspberry_command, resetsensor
-
-logging.warning("url %s" % URL)
 
 
 class WebSocketConnection(WebSocketApp):
@@ -16,11 +16,19 @@ class WebSocketConnection(WebSocketApp):
                               on_message=self.on_message,
                               on_error=self.on_error,
                               on_close=self.on_close,
-                              on_open=self.on_open)
+                              on_open=self.on_open,
+                              on_ping=self.onping,
+                              on_pong=self.onpong)
         self.should_send_data = False
         self.open_connection = False
         self.pipe = pipe
-        print "using", self.url
+        logging.info("using url:%s", str(self.url))
+
+    def onping(self, *args):
+        logging.info("received ping")
+
+    def onpong(self, *args):
+        logging.info("received pong")
 
     def on_message(self, ws, message):
         logging.info("received command:%s, %d bytes", message, len(message))
@@ -32,11 +40,11 @@ class WebSocketConnection(WebSocketApp):
 
     def on_close(self, ws):
         self.open_connection = False
-        logging.warn("### closed ###")
+        logging.error("### closed ###")
 
     def on_open(self, ws):
         self.open_connection = True
-        logging.warn("opened new socket")
+        logging.info("opened new socket")
 
         def run():
             while (self.open_connection == True):
@@ -63,8 +71,11 @@ class WebSocketConnection(WebSocketApp):
         self.open_connection = False
 
     def send_data(self, data):
-        if self.open_connection and len(data) != 0:
-            self.send(data, opcode=ABNF.OPCODE_BINARY)
+        try:
+            if self.open_connection and len(data) != 0:
+                self.send(data, opcode=ABNF.OPCODE_BINARY)
+        except Exception as e:
+            print e.message
 
     def set_pipe(self, pipe):
         self.pipe = pipe
