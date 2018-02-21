@@ -17,7 +17,7 @@ def test():
     run_command_async("sleep", "3")
 
 def resetsensor():
-    run_command_async("/home/pi/reset-sensor")
+    run_command_async("/home/pi/sensor-reader/service_files/reset-sensor.sh")
 
 def error():
     logging.warn("shell error")
