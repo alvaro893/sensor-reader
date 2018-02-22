@@ -2,6 +2,7 @@
 import logging
 import thread
 
+import time
 import websocket
 
 from websocket import WebSocketApp, ABNF, WebSocketException
@@ -19,13 +20,15 @@ class WebSocketConnection(WebSocketApp):
                               on_open=self.on_open,
                               on_ping=self.onping,
                               on_pong=self.onpong)
+        self.ping_timer = 0.0
         self.should_send_data = False
         self.open_connection = False
         self.pipe = pipe
         logging.info("using url:%s", str(self.url))
 
     def onping(self, *args):
-        logging.info("received ping")
+        logging.info("received ping, sending pong")
+        self.send("po", ABNF.OPCODE_PONG)
 
     def onpong(self, *args):
         logging.info("received pong")
@@ -49,10 +52,12 @@ class WebSocketConnection(WebSocketApp):
         def run():
             while (self.open_connection == True):
                 try:
-                    data = self.pipe.recv()
-                    # receive data from serial process and forward it if allowed
+                    data = self.pipe.recv() # receive data from serial process and forward it if allowed
                     if self.should_send_data:
                         self.send_data(data)
+                    elif time.time() - self.ping_timer > 5: # send ping to keep alive when not sending data
+                        self.send("p", ABNF.OPCODE_PING)
+                        self.ping_timer = time.time()
                 except WebSocketException as wse:
                     self.handleError(wse)
                 except IOError as ioe:
