@@ -1,14 +1,10 @@
 #!/usr/bin/python
 
 import logging
-from logging.handlers import RotatingFileHandler
-
 import sys
+from logging.handlers import RotatingFileHandler
+from Constants import LOG_LEVEL
 
-import thread
-from threading import Thread
-
-import server
 from analysis.AnalysisProcess import AnalysisProcess
 
 ### logging to file and stdout
@@ -16,14 +12,14 @@ formatter = logging.Formatter("%(levelname)s [%(asctime)s %(filename)s:%(lineno)
 LOGFILE = 'logs.log'
 file_handler = RotatingFileHandler(LOGFILE, mode='a', maxBytes=1 * 1024 * 1024, backupCount=1, encoding=None, delay=0)
 file_handler.setFormatter(formatter)
-file_handler.setLevel(logging.INFO)
+file_handler.setLevel(LOG_LEVEL)
 std_handler = logging.StreamHandler(sys.stdout)
-std_handler.setLevel(logging.DEBUG)
+std_handler.setLevel(LOG_LEVEL)
 std_handler.setFormatter(formatter)
 app_log = logging.getLogger('') #using default logger
 app_log.addHandler(file_handler)
 app_log.addHandler(std_handler)
-app_log.setLevel(logging.DEBUG)
+app_log.setLevel(LOG_LEVEL)
 ### end logging config
 
 import argparse
@@ -68,7 +64,11 @@ def define_args_and_log():
 
 def main():
     args = define_args_and_log()
-    port = serial_ports()[0]
+    try:
+        port = serial_ports()[0]
+    except IndexError as e:
+        logging.fatal("sensor not connected to port. Exiting...")
+        exit(1)
     # NOTE: each endpoint of a pipe can be only read by 1 process or thread, otherwise the data on the
     # pipe will be corrupted. That's why there is need of two pipes
 

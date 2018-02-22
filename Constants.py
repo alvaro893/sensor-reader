@@ -12,6 +12,7 @@ CLIENT_PATH = "/client"
 try:
     with open(".env.json") as file:
         data = json.load(file)
+        LOG_LEVEL = data.get("LOG_LEVEL") or logging.WARNING
         PASS = data.get("WS_PASSWORD") or "0"
         URL = data.get("URL")
         PORT = data.get("PORT") or 80
