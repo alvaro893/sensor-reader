@@ -99,7 +99,9 @@ class Camera():
         # not beeing used yet
         #self.last_frame_stream = ia.applyCustomColorMap(self.last_frame)
 
-        self.bg_subscration_frame = self.substractor.apply(self.last_frame)
+        # streaming background substraction works if copied
+        bg_subscration_frame = self.substractor.apply(self.last_frame)
+        np.copyto(self.bg_subscration_frame, bg_subscration_frame)
 
 
         self.frame_ready_callback()
