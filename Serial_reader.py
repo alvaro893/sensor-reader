@@ -6,7 +6,7 @@ from time import sleep
 import psutil
 from serial import Serial, SerialException
 
-from Constants import VERY_HIGH_PRIORITY, SENSOR_DELAY, SENSOR_MAX_THRESHOLD, SENSOR_MIN_THRESHOLD
+from Constants import VERY_HIGH_PRIORITY, SENSOR_DELAY, SENSOR_MAX_THRESHOLD, SENSOR_MIN_THRESHOLD, INITIAL_SEQUENCE
 
 
 def int16_to_bytes(i):
@@ -40,6 +40,16 @@ class Serial_reader(Serial):
         n_bytes = self.in_waiting
         return one_byte + self.read(n_bytes)
 
+    def consume_data(self, data):
+        """ separate lines using regex and the initial sequence"""
+        machs = data.split(INITIAL_SEQUENCE)
+        last_ind = len(machs) - 1
+        for ind, line in enumerate(machs):
+            if ind == last_ind: continue
+            # send line to analysis process
+            self.analysis_pipe.send(bytearray(line))
+        return machs[-1]
+
     def _send_data_loop(self):
         # blocks on receiving data from pipe
         while self.is_open:
@@ -55,22 +65,31 @@ class Serial_reader(Serial):
 
     def _run(self):
         # This represents the process
+        remains = b''
         thread.start_new_thread(self._send_initial_commands, ())
         thread.start_new_thread(self._send_data_loop, ())
         while self.is_open:
             try:
-                data = self._get_data()
-                self.network_pipe.send(data)
-                self.analysis_pipe.send(data)
+                # necessary to block thread (in_waiting method doesn't block)
+                one_byte = self.read(1)
+                n_bytes = self.in_waiting
+                bytes_read = one_byte + self.read(n_bytes)
+
+                # send raw data directly to websocket
+                self.network_pipe.send(bytes_read)
+
+                data = remains + bytes_read
+                remains = self.consume_data(data)
+
+            except SerialException as se:
+                logging.error(se.message)
+                self.stop()
+                break
             except IOError as ioe:
                 logging.error(ioe.message)
                 logging.warning("flushing serial")
                 self.flush()
                 #sleep(0.05)
-            except SerialException as se:
-                logging.error(se.message)
-                self.stop()
-                break
 
 
     def stop(self):

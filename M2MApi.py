@@ -1,3 +1,4 @@
+import logging
 from json import JSONDecoder, JSONEncoder
 from httplib import HTTPConnection
 import Constants
@@ -14,13 +15,15 @@ jsonDecoder = JSONDecoder()
 
 def getCredentials():
     path = '/m2m/token?type=resources&groupName='+group
-    dic =  _perform_request(path, headers)
-    if dic['msg'] == 'Success':
-        secret =   dic['tokenResponses'][0]['secret']
-        token =    dic['tokenResponses'][0]['token']
-        username = dic['tokenResponses'][0]['username']
-    else:
-        return "","",""
+    secret = ""; token = ""; username = ""
+    try:
+        dic =  _perform_request(path, headers)
+        if dic['msg'] == 'Success':
+            secret =   dic['tokenResponses'][0]['secret']
+            token =    dic['tokenResponses'][0]['token']
+            username = dic['tokenResponses'][0]['username']
+    except Exception as e:
+        logging.warn("cannot get credentials (are we connected to the Internet?) error message:%s", e.message)
     return secret,token,username
 
 def registration():

@@ -37,6 +37,7 @@ class AnalysisProcess(Process):
         self.submitTimer = time.time()
         self.movement_detected = False
         self.high_temperature_detected = False
+        self.last_incomp = bytearray('')
 
 
         self.camera = Camera()
@@ -60,16 +61,9 @@ class AnalysisProcess(Process):
         thread.start_new(server.startup, (self.camera,))
 
         while True:
-            # fix rows bigger than 84. some times there is more than 1 row
-            # the following code makes sure we get all the rows
             data = bytearray(self.pipe.recv())
-            datasize = len(data)
-            if (datasize % 84 == 0):
-                nrows = datasize / 84
-                for i in range(nrows):
-                    raw_row = data[i * 84: i * 84 + 84]
-                    row = raw_row[3:]  # row without initial sequence
-                    self.camera.feed_row(row)
+            row = data
+            self.camera.feed_row(row)
 
 
     def _get_last_frame(self):

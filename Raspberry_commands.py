@@ -4,8 +4,8 @@ from thread import start_new_thread
 from subprocess32 import call
 
 
-def shutdown():
-    run_command_async("/sbin/poweroff")
+# def shutdown():
+#     run_command_async("/sbin/poweroff")
 
 def reboot():
     run_command_async("/sbin/reboot")
@@ -34,7 +34,7 @@ def run_command_async(*args):
     start_new_thread(run, args)
 
 commands = {
-    'rs': shutdown,
+    # 'rs': shutdown,
     'rr': reboot,
     'ru': update
 }

@@ -2,7 +2,7 @@ import logging
 
 import cv2
 import numpy as np
-from analysis.fastutils import process_row, find_people, rescale_to_raw
+from analysis.fastutils import process_row, find_people, rescale_to_raw, normalize_with_absolute_temp, rescale_to_8bit
 
 import image_analysis as ia
 
@@ -22,6 +22,11 @@ so the image is 160 x 120 (20198 Bytes)
 
 
 def nothing(): pass
+def scale_range (input, min, max):
+    input += -(np.min(input))
+    input /= np.max(input) / (max - min)
+    input += min
+    return input
 
 class Camera():
     MAX_DATA_ROW = 240
@@ -30,6 +35,7 @@ class Camera():
     IMAGE_N_PIXELS = IMAGE_WIDTH*IMAGE_HEIGHT
     ROW_SIZE_2BIT = 13
     ROW_SIZE_8BIT = 81
+    NUMBER_OF_ABS_TEMP_READINGS = 20
 
     def __init__(self):
         self.frame_arr =            np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint8)
@@ -39,12 +45,18 @@ class Camera():
         self.bg_subscration_frame = np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint8)
         self.masked_heatmap =       np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint8)
         self.last_frame16b =        np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint16)
-        self.data_row =             np.empty((self.ROW_SIZE_8BIT), dtype=np.uint8)
+        self.normalized_frame =     np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint16)
+        self.data_row =             np.empty((self.ROW_SIZE_8BIT),                  dtype=np.uint8)
+        self.temperature_readings = np.zeros((self.NUMBER_OF_ABS_TEMP_READINGS),    dtype=np.int16)
+        self.temperature_readings_indx = 0
         self.substractor = cv2.createBackgroundSubtractorMOG2(history=100,detectShadows=False,varThreshold=10)
         self.telemetry = {}
         self.stopped = False
         self.frame_ready = False
+        self.sensor_version = 1.6
         self.frame_ready_callback = nothing
+        self.clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(1,1))
+
 
     def feed_row(self, bytearray_row):
         self.data_row = np.asarray(bytearray_row, dtype=np.uint8)
@@ -78,11 +90,20 @@ class Camera():
         n_row = self.data_row[0]
         if n_row < self.MAX_DATA_ROW:  # normal row
             # C code
-            process_row(self.frame_arr, self.data_row)
+            process_row(self.frame_arr, self.data_row, False, False)
 
         else:  # last row is telemetry data, also we got the whole frame
             self._process_telemetry(self.data_row)
             self._process_frame()
+
+    def _get_smooth_abs_temp(self):
+        """ Smooth the readings from the absolute temperature sensor by taking the average of the few last readings"""
+        self.temperature_readings_indx += 1
+        if self.temperature_readings_indx >= self.NUMBER_OF_ABS_TEMP_READINGS:
+            self.temperature_readings_indx = 0
+        self.temperature_readings[self.temperature_readings_indx] = self.telemetry['center_temp']
+        return int(round(self.temperature_readings.mean()))
+
 
     def _process_frame(self):
         """
@@ -94,8 +115,18 @@ class Camera():
         # generate the original 14bit image in a 16bit array
         rescale_to_raw(self.last_frame16b, self.last_frame, self.telemetry['raw_min_set'], self.telemetry['raw_max_set'])
 
-        # generate masked image based on temperature range
-        find_people(self.last_frame_mask, self.last_frame16b, 3800, 4300)
+        if(self.sensor_version >= 1.7):
+        # Normalize the image using the new absolute temperature sensor
+            absolute_temp_mean = self._get_smooth_abs_temp()
+            normalize_with_absolute_temp(self.normalized_frame, self.last_frame16b, absolute_temp_mean)
+            cv2.imshow('last_frame_old', cv2.resize(self.last_frame, (800, 600), interpolation=cv2.INTER_CUBIC))
+            rescale_to_8bit(self.last_frame, self.normalized_frame, self.normalized_frame.min(), self.normalized_frame.max()) #back to 8bit
+
+            # generate masked image based on temperature range
+            find_people(self.last_frame_mask, self.normalized_frame, absolute_temp_mean +100, absolute_temp_mean + 500)
+        else:
+            find_people(self.last_frame_mask, self.last_frame16b, 3800, 4300)
+
         # not beeing used yet
         #self.last_frame_stream = ia.applyCustomColorMap(self.last_frame)
 
@@ -106,9 +137,10 @@ class Camera():
 
         self.frame_ready_callback()
 
-        # cv2.imshow('last_frame', cv2.resize(self.last_frame, (700,600), interpolation=cv2.INTER_CUBIC))
+        # cv2.imshow('last_frame_mask', cv2.resize(self.last_frame_mask, (800,600), interpolation=cv2.INTER_CUBIC))
+        # cv2.imshow('last_frame', cv2.resize(self.last_frame, (800,600), interpolation=cv2.INTER_CUBIC))
         # cv2.imshow('last_frame_mask', cv2.resize(self.last_frame_mask, (700, 600), interpolation=cv2.INTER_CUBIC))
-        # cv2.waitKey(22)& 0xFF
+        cv2.waitKey(22)& 0xFF
     
     def on_frame_ready(self, callback):
         """ When a frame is generated the given callback will be executed"""
@@ -133,7 +165,18 @@ class Camera():
         telemetry['frame_delay'] =              (data[37] & 0xff) + (data[38] << 8)
         # telemetry['time_counter2'] =            from_bytes_to_int( data[44:42:-1] + data[41:39:-1] )
         # telemetry['frame_state'] =             str(data[46])
-        telemetry['sensor_version'] =            str(data[47]/10.0)
+        telemetry['sensor_version'] =            data[47]
+        # print "sensor version:", str(telemetry['sensor_version'])
+        self.sensor_version = telemetry['sensor_version']/10.0
+        if(self.sensor_version >= 1.7):
+            telemetry['abs_sensor_temp'] =          (data[49] & 0xff) + (data[50] << 8)
+            telemetry['center_temp'] =              (data[52] & 0xff) + (data[53] << 8)
+            telemetry['left_temp'] =                (data[55] & 0xff) + (data[56] << 8)
+            telemetry['right_temp'] =               (data[58] & 0xff) + (data[59] << 8)
+            # print "center:", str(telemetry['center_temp']/100.0)
+            # print "left_temp:", str(telemetry['left_temp']/100.0)
+            # print "right_temp:", str(telemetry['right_temp']/100.0)
+            # print "abs_sensor_temp:", str(telemetry['abs_sensor_temp']/100.0)
         self.telemetry = telemetry
 
         
