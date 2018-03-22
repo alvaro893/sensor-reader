@@ -119,7 +119,6 @@ class Camera():
         # Normalize the image using the new absolute temperature sensor
             absolute_temp_mean = self._get_smooth_abs_temp()
             normalize_with_absolute_temp(self.normalized_frame, self.last_frame16b, absolute_temp_mean)
-            cv2.imshow('last_frame_old', cv2.resize(self.last_frame, (800, 600), interpolation=cv2.INTER_CUBIC))
             rescale_to_8bit(self.last_frame, self.normalized_frame, self.normalized_frame.min(), self.normalized_frame.max()) #back to 8bit
 
             # generate masked image based on temperature range
@@ -139,8 +138,7 @@ class Camera():
 
         # cv2.imshow('last_frame_mask', cv2.resize(self.last_frame_mask, (800,600), interpolation=cv2.INTER_CUBIC))
         # cv2.imshow('last_frame', cv2.resize(self.last_frame, (800,600), interpolation=cv2.INTER_CUBIC))
-        # cv2.imshow('last_frame_mask', cv2.resize(self.last_frame_mask, (700, 600), interpolation=cv2.INTER_CUBIC))
-        cv2.waitKey(22)& 0xFF
+        # cv2.waitKey(22)& 0xFF
     
     def on_frame_ready(self, callback):
         """ When a frame is generated the given callback will be executed"""
