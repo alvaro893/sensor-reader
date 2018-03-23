@@ -35,6 +35,10 @@ cd analysis
 sudo python setup.py build_ext -b ..
 cd ..
 
+echo -e "Update hostname\n\n" |& tee -a "$logfile"
+apt-get install jq -y
+"$service_files_path/update_hostname.sh" |& tee -a "$logfile"
+
 echo -e "Restart sensor service\n\n"  |& tee -a "$logfile"
 "$service_files_path/reset-sensor.sh" |& tee -a "$logfile"
 
