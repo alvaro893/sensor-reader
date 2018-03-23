@@ -2,7 +2,7 @@
 
 
 # set the camera name as hostname
-newhostname=`jq '.CAMERA_NAME' sensor-reader/.env.json`
+newhostname=`jq '.CAMERA_NAME' /home/pi/sensor-reader/.env.json`
 # remove non alpha-numerics
 newhostname=`echo "$newhostname" | sed 's/[^a-zA-Z0-9]//g'`
 # to lowercase
