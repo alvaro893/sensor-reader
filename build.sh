@@ -9,9 +9,14 @@ echo "" > "$logfile"
 echo "-------------------------------------" >> "$logfile"
 
 
-echo -e "Update time" |& tee -a "$logfile"
-"$service_files_path/synctime.sh"
-date >> "$logfile"
+echo -e "Update time Configuration\n\n" |& tee -a "$logfile"
+apt-get install ntp -y
+cat "$service_files_path/ntp.conf" > /etc/ntp.conf
+systemctl restart ntp
+sleep 1
+ntpq -p |& tee -a "$logfile"
+echo Today is `date` |& tee -a "$logfile"
+
 
 
 echo -e "Make all files in service_files executable...\n\n" |& tee -a "$logfile"

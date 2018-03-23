@@ -18,12 +18,12 @@ try:
         PORT = data.get("PORT") or 80
         CAMERA_NAME = data.get("CAMERA_NAME") or ""
         #Time operations
-        MAX_HOUR = data.get("MAX_HOUR")
-        MAX_MIN = data.get("MAX_MIN")
+        MAX_HOUR = data.get("MAX_HOUR") or 10
+        MAX_MIN = data.get("MAX_MIN")   or 15
         #Sensor command
         SENSOR_DELAY = data.get("SENSOR_DELAY") or 500
-        SENSOR_MAX_THRESHOLD = data.get("SENSOR_MAX_THRESHOLD")
-        SENSOR_MIN_THRESHOLD =  data.get("SENSOR_MIN_THRESHOLD")
+        SENSOR_MAX_THRESHOLD = data.get("SENSOR_MAX_THRESHOLD") or 4000
+        SENSOR_MIN_THRESHOLD =  data.get("SENSOR_MIN_THRESHOLD") or 3000
         HEATMAP_SECONDS =      data.get("HEATMAP_SECONDS") or 60
         HIGH_TEMPERATURE_ALARM = data.get("HIGH_TEMPERATURE_ALARM") or 10000
         MD_SENSITIVITY         = data.get("MD_SENSITIVITY") or 5.0
