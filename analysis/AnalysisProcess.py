@@ -62,8 +62,7 @@ class AnalysisProcess(Process):
 
         while True:
             data = bytearray(self.pipe.recv())
-            row = data
-            self.camera.feed_row(row)
+            self.camera.feed_row(data)
 
 
     def _get_last_frame(self):

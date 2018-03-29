@@ -5,7 +5,7 @@ import time
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from SocketServer import ThreadingMixIn
 from urlparse import urlparse, parse_qs
-import socket, struct
+import socket, errno, struct
 
 def get_default_gateway_linux():
     """Read the default gateway directly from /proc."""
@@ -17,13 +17,45 @@ def get_default_gateway_linux():
 
             return socket.inet_ntoa(struct.pack("<L", int(fields[2], 16)))
 
+def handleError(e):
+    if isinstance(e.args, tuple):
+        if e[0] == errno.EPIPE or e[0] == errno.ECONNRESET:
+           # remote peer disconnected
+           logging.info("client reading video feed disconnected");
+        else:
+           # determine and handle different error
+           logging.error("unhandled socket error detected, errno is %d" % e[0])
+    else:
+           logging.error("unhandled socket error detected, %d" % e)
 
 def startup(cam):
     port = 8088
     class RequestHandler(BaseHTTPRequestHandler):
         # static variables
         camera = cam
+
+        def do_HEAD(self):
+            self.send_response(200)
+
+        def do_AUTHHEAD(self):
+            self.send_response(401)
+            self.send_header('WWW-Authenticate', 'Basic realm=\"Unauthorized access forbidden\"')
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            self.wfile.write("\r\n")
+
+
         def do_GET(self):
+            """process get requests"""
+
+            ### authentication.
+            auth = self.headers.getheader('Authorization')
+            if auth != 'Basic YWRtaW46bGV2aXRlemVyMjAxOA==': #admin:levitezer2018
+                self.do_AUTHHEAD()
+                return
+
+            ### end of authentication
+
             parsed_path = urlparse(self.path)
             parsed_query = parse_qs(parsed_path.query)
             try:
@@ -55,6 +87,7 @@ def startup(cam):
 
             logging.debug( message)
             if parsed_path.path.endswith('.mjpg'):
+                old_frame_hash = 0
                 if parsed_path.path == '/cam.mjpg':
                     img_raw = RequestHandler.camera.last_frame
                 elif parsed_path.path == '/background.mjpg':
@@ -69,11 +102,16 @@ def startup(cam):
                     return
 
                 self.send_response(200)
-                self.send_header('Content-type', 'multipart/x-mixed-replace; boundary=--boundaryjpgxxx')
+                self.send_header('Content-type', 'multipart/x-mixed-replace; boundary=--boundaryjpg')
                 self.end_headers()
                 while True:
+                    # TODO: remove sleep ? we still need for performance, hash check is not enough...
+                    time.sleep(0.005)
+                    # skip until new frame
+                    if RequestHandler.camera.last_frame_hash == old_frame_hash:
+                        continue
+
                     try:
-                        time.sleep(0.1)
                         if not RequestHandler.camera:
                             continue
                         if quality == 0:
@@ -86,29 +124,30 @@ def startup(cam):
                         # ret, img = cv2.imencode('.jpeg', np.random.randint(0, 255, (300, 300), dtype=np.uint8))
                         if not ret:
                             continue
-                        self.wfile.write("--boundaryjpgxxx")
-                        self.send_header('Content-type', 'image/jpg')
+                        self.wfile.write("--boundaryjpg")
+                        self.wfile.write("\r\n") # always line feed after boundary
+                        self.send_header('Content-type', 'image/jpeg')
                         self.send_header('Content-length', str(img.shape[0]))
                         self.end_headers()
                         self.wfile.write(img.tobytes())
 
+                        old_frame_hash = RequestHandler.camera.last_frame_hash
                         # jpg.save(self.wfile, 'JPEG')
-                    except KeyboardInterrupt:
-                        break
-                    except socket.error as e:
-                        logging.info("%s, %s, %s", e.strerror, e.errno)
-                        break
 
-                return
-            elif self.path.endswith('.html'):
+                    except socket.error as e:
+                        handleError(e)
+                        return #exit infinite loop
+
+            elif self.path =='/cam.html':
                 ip_addr=get_default_gateway_linux()
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html')
                 self.end_headers()
-                self.wfile.write('<html><head></head><body>')
-                self.wfile.write('<img src="http://127.0.0.1:' + str(port) + '/cam.mjpg"/>')
+                self.wfile.write('<html><head><meta charset="UTF-8"></head><body>')
+                self.wfile.write('<img src="/cam.mjpg"/>')
                 self.wfile.write('</body></html>')
-                return
+            else:
+                self.send_response(404)
 
     class VideoServer(ThreadingMixIn, HTTPServer):
         """ server in thread """

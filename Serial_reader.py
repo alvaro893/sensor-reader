@@ -47,7 +47,7 @@ class Serial_reader(Serial):
         for ind, line in enumerate(machs):
             if ind == last_ind: continue
             # send line to analysis process
-            self.analysis_pipe.send(bytearray(line))
+            self.analysis_pipe.send(line)
         return machs[-1]
 
     def _send_data_loop(self):
@@ -70,16 +70,14 @@ class Serial_reader(Serial):
         thread.start_new_thread(self._send_data_loop, ())
         while self.is_open:
             try:
-                # necessary to block thread (in_waiting method doesn't block)
-                one_byte = self.read(1)
-                n_bytes = self.in_waiting
-                bytes_read = one_byte + self.read(n_bytes)
+                # blocking reading (in_waiting method doesn't block)
+                bytes_read = self.read(300 + self.in_waiting)
 
                 # send raw data directly to websocket
                 self.network_pipe.send(bytes_read)
 
-                data = remains + bytes_read
-                remains = self.consume_data(data)
+                # separate lines and send to network process
+                remains = self.consume_data(remains + bytes_read)
 
             except SerialException as se:
                 logging.error(se.message)

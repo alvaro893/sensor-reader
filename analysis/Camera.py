@@ -56,6 +56,7 @@ class Camera():
         self.sensor_version = 1.6
         self.frame_ready_callback = nothing
         self.clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(1,1))
+        self.last_frame_hash = 0
 
 
     def feed_row(self, bytearray_row):
@@ -135,6 +136,9 @@ class Camera():
 
 
         self.frame_ready_callback()
+
+        # hash it. (works fast for small array like the frame)
+        self.last_frame_hash = hash(self.last_frame.__str__())
 
         # cv2.imshow('last_frame_mask', cv2.resize(self.last_frame_mask, (800,600), interpolation=cv2.INTER_CUBIC))
         # cv2.imshow('last_frame', cv2.resize(self.last_frame, (800,600), interpolation=cv2.INTER_CUBIC))
