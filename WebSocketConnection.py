@@ -7,11 +7,15 @@ import websocket
 
 from websocket import WebSocketApp, ABNF, WebSocketException
 
-from Constants import URL, CAMERA_PATH, PARAMETERS, PORT
 from Raspberry_commands import is_raspberry_command, resetsensor
-
+from Cache import get_var
 
 class WebSocketConnection(WebSocketApp):
+    CAMERA_PATH = "/camera"
+    CLIENT_PATH = "/client"
+    URL, PORT, WS_PASSWORD, CAMERA_NAME  = get_var("URL", "PORT", "WS_PASSWORD", "CAMERA_NAME")
+    PARAMETERS = "?pass=%s&camera_name=%s" % (WS_PASSWORD, CAMERA_NAME)
+
     def __init__(self, pipe, url="ws://"+URL+ ":" + str(PORT) + CAMERA_PATH + PARAMETERS):
         WebSocketApp.__init__(self, url,
                               on_message=self.on_message,
@@ -31,7 +35,7 @@ class WebSocketConnection(WebSocketApp):
         self.send("po", ABNF.OPCODE_PONG)
 
     def onpong(self, *args):
-        logging.info("received pong")
+        logging.debug("received pong")
 
     def on_message(self, ws, message):
         logging.info("received command:%s, %d bytes", message, len(message))
@@ -43,11 +47,11 @@ class WebSocketConnection(WebSocketApp):
 
     def on_close(self, ws):
         self.open_connection = False
-        logging.error("### closed ###")
+        logging.error("Websocket connection CLOSED")
 
     def on_open(self, ws):
         self.open_connection = True
-        logging.info("opened new socket")
+        logging.info("Websocet connection OPENED")
 
         def run():
             while (self.open_connection == True):
@@ -80,7 +84,7 @@ class WebSocketConnection(WebSocketApp):
             if self.open_connection and len(data) != 0:
                 self.send(data, opcode=ABNF.OPCODE_BINARY)
         except Exception as e:
-            print e.message
+            logging.error("Exception sending data:%s", e.message)
 
     def set_pipe(self, pipe):
         self.pipe = pipe

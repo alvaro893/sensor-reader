@@ -6,7 +6,11 @@ from time import sleep
 import psutil
 from serial import Serial, SerialException
 
-from Constants import VERY_HIGH_PRIORITY, SENSOR_DELAY, SENSOR_MAX_THRESHOLD, SENSOR_MIN_THRESHOLD, INITIAL_SEQUENCE
+from Cache import get_var
+
+VERY_HIGH_PRIORITY, SENSOR_DELAY, SENSOR_MAX_THRESHOLD, SENSOR_MIN_THRESHOLD = \
+    get_var("VERY_HIGH_PRIORITY","SENSOR_DELAY","SENSOR_MAX_THRESHOLD","SENSOR_MIN_THRESHOLD")
+INITIAL_SEQUENCE = b'\xff\xff\xff'
 
 
 def int16_to_bytes(i):
@@ -50,10 +54,17 @@ class Serial_reader(Serial):
             self.analysis_pipe.send(line)
         return machs[-1]
 
-    def _send_data_loop(self):
+    def _send_data_loop_network(self):
         # blocks on receiving data from pipe
         while self.is_open:
             data = self.network_pipe.recv()
+            logging.info("received data:" + str(data))
+            self.write(data)
+
+    def _send_data_loop_analysis(self):
+        # blocks on receiving data from pipe
+        while self.is_open:
+            data = self.analysis_pipe.recv()
             logging.info("received data:" + str(data))
             self.write(data)
 
@@ -67,7 +78,8 @@ class Serial_reader(Serial):
         # This represents the process
         remains = b''
         thread.start_new_thread(self._send_initial_commands, ())
-        thread.start_new_thread(self._send_data_loop, ())
+        thread.start_new_thread(self._send_data_loop_network, ())
+        thread.start_new_thread(self._send_data_loop_analysis, ())
         while self.is_open:
             try:
                 # blocking reading (in_waiting method doesn't block)

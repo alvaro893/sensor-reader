@@ -1,14 +1,11 @@
 import logging
 from json import JSONDecoder, JSONEncoder
 from httplib import HTTPConnection
-import Constants
-
-url = Constants.IMPACT_URL
-group = Constants.IMPACT_GROUP
-serialNumber = Constants.IMPACT_SERIAL_NUMBER
+from Cache import get_var
+url, group, serialNumber = get_var("IMPACT_URL","IMPACT_GROUP","IMPACT_SERIAL_NUMBER")
 
 port = 9090
-headers ={"Content-Type":"application/json", "Accept": "application/json", "Authorization": "Basic YWx2YXJvYm9scm86QWx2YXJvQDkxIQ=="}
+headers ={"Content-Type":"application/json", "Accept": "application/json", "Authorization": "Basic YWx2YXJvYm9scm86Tm9raWFAMjAxOA=="}
 
 jsonEncoder = JSONEncoder()
 jsonDecoder = JSONDecoder()
@@ -16,19 +13,16 @@ jsonDecoder = JSONDecoder()
 def getCredentials():
     path = '/m2m/token?type=resources&groupName='+group
     secret = ""; token = ""; username = ""
-    try:
-        dic =  _perform_request(path, headers)
-        if dic['msg'] == 'Success':
-            secret =   dic['tokenResponses'][0]['secret']
-            token =    dic['tokenResponses'][0]['token']
-            username = dic['tokenResponses'][0]['username']
-    except Exception as e:
-        logging.warn("cannot get credentials (are we connected to the Internet?) error message:%s", e.message)
+    dic =  _perform_request(path, headers)
+    if dic['msg'] == 'Success':
+        secret =   dic['tokenResponses'][0]['secret']
+        token =    dic['tokenResponses'][0]['token']
+        username = dic['tokenResponses'][0]['username']
     return secret,token,username
 
 def registration():
     path = '/m2m/applications/registration'
-    data = {'headers': {"Authorization": "Basic YWx2YXJvYm9scm86QWx2YXJvQDkxIQ=="}, 'url':'http://callback-server-ir-cloud.espoo-apps.ilab.cloud/m2m/impact/callback'}
+    data = {'headers': {"Authorization": "Basic YWx2YXJvYm9scm86Tm9raWFAMjAxOA=="}, 'url':'http://callback-server-ir-cloud.espoo-apps.ilab.cloud/m2m/impact/callback'}
     _perform_request(path, headers, 'PUT', data)
 
 def listEndpoints(startOffset=1, endOffset=10):
@@ -56,5 +50,5 @@ def _perform_request(path, headers, method='GET', data=None):
     http.request(method, path, body=jsonData, headers=headers)
     response = http.getresponse()
     dic = jsonDecoder.decode(response.read())
-    print response.status
+    # logging.info("M2M api response:%d", int(response.status))
     return dic

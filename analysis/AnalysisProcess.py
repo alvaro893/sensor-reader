@@ -4,6 +4,7 @@ import time
 
 import cv2
 
+import Cache
 import Images
 from multiprocessing import Process
 
@@ -13,12 +14,13 @@ import psutil
 import image_analysis as ia
 import server
 import time_utils
-import MqttClient
+from MqttClient import instance as mqtt_client
 from Camera import Camera
-from Constants import *
 import httpClient
+from Cache import get_var, HIGH_PRIORITY
 
-
+HEATMAP_SECONDS, MD_SENSITIVITY, HIGH_TEMPERATURE_ALARM = \
+    get_var("HEATMAP_SECONDS","MD_SENSITIVITY","HIGH_TEMPERATURE_ALARM")
 class AnalysisProcess(Process):
     def __init__(self, pipe):
         Process.__init__(self, name="CameraAnalysisProcess")
@@ -30,7 +32,7 @@ class AnalysisProcess(Process):
         self.pipe = pipe
         self.frame_list = []  # List of grayscale people areas extracted from original frame
         self.people_list = []  # List of estimation for amount of people in a frame
-        self.camera_name = CAMERA_NAME  # Camera name
+        self.camera_name = get_var("CAMERA_NAME")
         self.heatmapTimer = time.time()
         self.movementTimer = time.time()
         self.hTemperatureTimer = time.time()
@@ -58,7 +60,7 @@ class AnalysisProcess(Process):
         """
 
         # Motion jpeg server
-        thread.start_new(server.startup, (self.camera,))
+        thread.start_new(server.startup, (self.camera, self.pipe))
 
         while True:
             data = bytearray(self.pipe.recv())
@@ -83,8 +85,8 @@ class AnalysisProcess(Process):
             #thread.start_new_thread(self._analyze_frame, ())
             #cleaning
             self.mean.fill(0)
-            logging.info("heatmap created with %d frames", self.meanCounter)
-            self._submitHeatmap()
+            logging.debug("heatmap created with %d frames", self.meanCounter)
+            # self._submitHeatmap()
             self.meanCounter = 0
             self.heatmapTimer = t
 
@@ -152,22 +154,24 @@ class AnalysisProcess(Process):
     def _submitHeatmap(self):
         def net_thread_func():
             httpClient.submitImageBuffer(Images._colored_heatmap)
-            logging.info("done submitting heatmap")
+            logging.debug("done submitting heatmap")
         thread.start_new(net_thread_func, ())
 
 
     def _submitData(self):
         """Post processed data to server"""
         def net_thread_func():
-            MqttClient.submit_data(self.n_people, 'people')
-            MqttClient.submit_data(str(self.high_temperature_detected), 'firedetection')
-            MqttClient.submit_data(str(self.movement_detected), 'movementdetection')
+            mqtt_client.submit_data(self.n_people, 'people')
+            mqtt_client.submit_data(str(self.high_temperature_detected), 'firedetection')
+            mqtt_client.submit_data(str(self.movement_detected), 'movementdetection')
             # image_heatmap = bytearray(Images.getBufferedImage(Images._colored_heatmap))
-            # MqttClient.submit_data(image_heatmap.__str__(), 'heatmap')
-            MqttClient.submit_telemetry(self.camera.telemetry)
-
-            httpClient.submitData(self.n_people,"people_count")
-            logging.info("done submitting data")
+            # mqtt_client.submit_data(image_heatmap.__str__(), 'heatmap')
+            mqtt_client.submit_telemetry(self.camera.telemetry)
+            Cache.analysis_data['people_count'] =       int(self.n_people)
+            Cache.analysis_data['fire_detection'] =     bool(self.high_temperature_detected)
+            Cache.analysis_data['movement_detection'] = bool(self.movement_detected)
+            # httpClient.submitData(self.n_people,"people_count")
+            logging.debug("done submitting data")
         thread.start_new(net_thread_func, ())
 
     def _read_mask_files(self):

@@ -2,7 +2,9 @@ import logging
 from httplib import HTTPConnection, HTTPException
 from threading import Thread
 
-from Constants import URL, CAMERA_NAME, PORT
+from Cache import get_var
+
+URL, CAMERA_NAME, PORT = get_var("URL","CAMERA_NAME","PORT")
 
 
 # timeout for each request will be 1 sec

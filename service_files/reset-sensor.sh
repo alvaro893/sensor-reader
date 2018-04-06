@@ -1,3 +1,3 @@
 #!/bin/bash
 systemctl restart sensor && \
-echo "---Sensor service restarted successfully---"
+echo -e "Sensor service restarted successfully/n"

@@ -1,13 +1,18 @@
 #!/usr/bin/python
 
 import logging
+import socket
 import sys
 from logging.handlers import RotatingFileHandler
-from Constants import LOG_LEVEL
+
+import Cache
+import M2MApi
+from MqttClient import instance as mqtt_client
 
 from analysis.AnalysisProcess import AnalysisProcess
 
 ### logging to file and stdout
+LOG_LEVEL = Cache.get_var("LOG_LEVEL")
 formatter = logging.Formatter("%(levelname)s [%(asctime)s %(filename)s:%(lineno)s - %(funcName)s() ] %(message)s")
 LOGFILE = 'logs.log'
 file_handler = RotatingFileHandler(LOGFILE, mode='a', maxBytes=1 * 1024 * 1024, backupCount=1, encoding=None, delay=0)
@@ -31,7 +36,7 @@ from DetectSerialPorts import serial_ports
 from Serial_reader import Serial_reader
 from WebSocketConnection import WebSocketConnection
 from multiprocessing import Pipe
-from Constants import HIGH_PRIORITY
+from Cache import HIGH_PRIORITY
 
 __author__ = 'Alvaro'
 
@@ -65,10 +70,22 @@ def define_args_and_log():
 def main():
     args = define_args_and_log()
     try:
+        SECRET, TOKEN, USER = M2MApi.getCredentials()
+        Cache.save_var(IMPACT_SECRET=SECRET, IMPACT_TOKEN=TOKEN, IMPACT_USER=USER)
+    except Exception as e:
+        logging.warning("Could not update Impact credentials: %s", e)
+
+
+    try:
         port = serial_ports()[0]
-    except IndexError as e:
+        mqtt_client.start()
+        mqtt_client.submit_configuration()
+    except IndexError:
         logging.fatal("sensor not connected to port. Exiting...")
         exit(1)
+    except socket.error as socketErr:
+        logging.error("Could not connect to Impact: socket error message: %s", socketErr.strerror)
+
     # NOTE: each endpoint of a pipe can be only read by 1 process or thread, otherwise the data on the
     # pipe will be corrupted. That's why there is need of two pipes
 
@@ -96,7 +113,7 @@ def main():
         while usb_serial.is_open:
             websocket.run_forever()
             logging.warn("trying to reconnect to websocket...")
-            time.sleep(0.5)
+            time.sleep(5)
     except KeyboardInterrupt or RuntimeError as e:
         usb_serial.close()
         exit(1)  # exit with error (it's supose to run forever)

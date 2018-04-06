@@ -5,6 +5,7 @@ import numpy as np
 from analysis.fastutils import process_row, find_people, rescale_to_raw, normalize_with_absolute_temp, rescale_to_8bit
 
 import image_analysis as ia
+from Cache import get_var
 
 """
 00 01 02 04 ------
@@ -21,6 +22,7 @@ so the image is 160 x 120 (20198 Bytes)
 """
 
 
+FLIP_HORIZONTAL, FLIP_VERTICAL = get_var("FLIP_HORIZONTAL", "FLIP_VERTICAL")
 def nothing(): pass
 def scale_range (input, min, max):
     input += -(np.min(input))
@@ -90,8 +92,8 @@ class Camera():
     def _process_row(self):
         n_row = self.data_row[0]
         if n_row < self.MAX_DATA_ROW:  # normal row
-            # C code
-            process_row(self.frame_arr, self.data_row, False, False)
+            # Cython signature: process_row(unsigned char [:,:] frame_arr, unsigned char [:] row, int flip_horizontal, int flip_vertical)
+            process_row(self.frame_arr, self.data_row, FLIP_HORIZONTAL, FLIP_VERTICAL)
 
         else:  # last row is telemetry data, also we got the whole frame
             self._process_telemetry(self.data_row)
@@ -162,12 +164,12 @@ class Camera():
         telemetry['discard_packets'] =          (data[25] & 0xff) + (data[26] << 8 )
         telemetry['raw_max_set'] =              (data[28] & 0xff) + (data[29] << 8)
         telemetry['raw_min_set'] =              (data[31] & 0xff) + (data[32] << 8)
-        # telemetry['agc'] =                    '{:02d}'.format( data[34] )
-        telemetry['bit_depth'] =                 data[35]
+        telemetry['agc'] =                       int(data[34])
+        telemetry['bit_depth'] =                 int(data[35])
         telemetry['frame_delay'] =              (data[37] & 0xff) + (data[38] << 8)
         # telemetry['time_counter2'] =            from_bytes_to_int( data[44:42:-1] + data[41:39:-1] )
         # telemetry['frame_state'] =             str(data[46])
-        telemetry['sensor_version'] =            data[47]
+        telemetry['sensor_version'] =            int(data[47])
         # print "sensor version:", str(telemetry['sensor_version'])
         self.sensor_version = telemetry['sensor_version']/10.0
         if(self.sensor_version >= 1.7):
