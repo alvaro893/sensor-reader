@@ -155,7 +155,7 @@ def startup(camera, serial_pipe):
                 'sys_version=%s' % self.sys_version,
                 'protocol_version=%s' % self.protocol_version,
                 '',
-            ])
+                ])
 
             logging.debug( message)
             if parsed_path.path.endswith('.mjpg'):
@@ -242,13 +242,19 @@ def startup(camera, serial_pipe):
                     ret, buf = Images.getBufferedImage(Images._colored_heatmap)
                     self.wfile.write(buf.tobytes())
                 except Exception as e:
-                     self.send_response(404)
+                    self.send_response(404)
 
             elif self.path == '/build.log':
                 self.do_get_file('build.log')
 
             elif self.path == '/logs.log':
                 self.do_get_file('logs.log')
+
+            elif (self.path == '/load'):
+                self.send_response(200)
+                self.send_header('Content-type', 'text/plain')
+                self.end_headers()
+                text = Raspberry_commands.loadavg(self.wfile)
 
             else:
                 self.send_response(404)

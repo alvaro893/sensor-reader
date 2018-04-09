@@ -13,8 +13,8 @@ def reboot():
 def update():
     run_command_async("./build.sh")
 
-def test():
-    run_command_async("sleep", "3")
+def loadavg(stream):
+    return call(["cat", "/proc/loadavg"], timeout=1, stdout=stream)
 
 def resetsensor():
     run_command_async("/home/pi/sensor-reader/service_files/reset-sensor.sh")
