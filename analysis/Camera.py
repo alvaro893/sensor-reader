@@ -2,7 +2,7 @@ import logging
 
 import cv2
 import numpy as np
-from analysis.fastutils import process_row, find_people, rescale_to_raw, normalize_with_absolute_temp, rescale_to_8bit
+from analysis.fastutils import process_row, find_people, rescale_to_raw, normalize_with_absolute_temp, rescale_to_8bit,stream_image
 
 import image_analysis as ia
 from Cache import get_var
@@ -37,7 +37,7 @@ class Camera():
     IMAGE_N_PIXELS = IMAGE_WIDTH*IMAGE_HEIGHT
     ROW_SIZE_2BIT = 13
     ROW_SIZE_8BIT = 81
-    NUMBER_OF_ABS_TEMP_READINGS = 20
+    NUMBER_OF_ABS_TEMP_READINGS = 3
 
     def __init__(self):
         self.frame_arr =            np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint8)
@@ -48,6 +48,8 @@ class Camera():
         self.masked_heatmap =       np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint8)
         self.last_frame16b =        np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint16)
         self.normalized_frame =     np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint16)
+        self.normalized_frame_visible =     np.empty((self.IMAGE_HEIGHT, self.IMAGE_WIDTH), dtype=np.uint16)
+        self.last_frame_stream =          np.ones((self.IMAGE_HEIGHT, self.IMAGE_WIDTH, 3), dtype=np.uint8)
         self.data_row =             np.empty((self.ROW_SIZE_8BIT),                  dtype=np.uint8)
         self.temperature_readings = np.zeros((self.NUMBER_OF_ABS_TEMP_READINGS),    dtype=np.int16)
         self.temperature_readings_indx = 0
@@ -122,15 +124,14 @@ class Camera():
         # Normalize the image using the new absolute temperature sensor
             absolute_temp_mean = self._get_smooth_abs_temp()
             normalize_with_absolute_temp(self.normalized_frame, self.last_frame16b, absolute_temp_mean)
-            rescale_to_8bit(self.last_frame, self.normalized_frame, self.normalized_frame.min(), self.normalized_frame.max()) #back to 8bit
-
+            # rescale_to_8bit(self.last_frame, self.normalized_frame_visible, self.normalized_frame.min(), self.normalized_frame.max()) #back to 8bit
             # generate masked image based on temperature range
-            find_people(self.last_frame_mask, self.normalized_frame, absolute_temp_mean +100, absolute_temp_mean + 500)
+            find_people(self.last_frame_mask, self.normalized_frame, 2900, 3500) # TODO: make the range to the configuration
         else:
             find_people(self.last_frame_mask, self.last_frame16b, 3800, 4300)
 
-        # not beeing used yet
-        #self.last_frame_stream = ia.applyCustomColorMap(self.last_frame)
+        # color Stream image
+        ia.applyCustomColorMap(self.last_frame, dst_img=self.last_frame_stream)
 
         # streaming background substraction works if copied
         bg_subscration_frame = self.substractor.apply(self.last_frame)
@@ -142,8 +143,36 @@ class Camera():
         # hash it. (works fast for small array like the frame)
         self.last_frame_hash = hash(self.last_frame.__str__())
 
+        # rescale the normalized frame to get all 16 bit range
+        stream_image(self.normalized_frame_visible, self.normalized_frame)
+
+        # def makecolor(arr):
+        #     ran16 = 255*255
+        #     section = ran16/3
+        #     # TODO: issue is on the conditions boolean values are too sharp for this
+        #     condition_B = (arr >=   0)         & (arr <   section)
+        #     condition_G = (arr >=   section)   & (arr < 2*section)
+        #     condition_R = (arr >= 2*section)   & (arr < 3*section)
+        #     B =  arr  * 1/255.0 * condition_B
+        #     G =  arr  * 1/255.0 * condition_G
+        #     R =  arr  * 1/255.0 * condition_R
+        #     self.color_frame[:,:,0] = B
+        #     self.color_frame[:,:,1] = G
+        #     self.color_frame[:,:,2] = R
+        #     cv2.imshow('R', cv2.resize(R, (800, 600), interpolation=cv2.INTER_CUBIC))
+        #     cv2.imshow('G', cv2.resize(G, (800, 600), interpolation=cv2.INTER_CUBIC))
+        #     cv2.imshow('B', cv2.resize(B, (800, 600), interpolation=cv2.INTER_CUBIC))
+
+
         # cv2.imshow('last_frame_mask', cv2.resize(self.last_frame_mask, (800,600), interpolation=cv2.INTER_CUBIC))
-        # cv2.imshow('last_frame', cv2.resize(self.last_frame, (800,600), interpolation=cv2.INTER_CUBIC))
+        # cv2.imshow('last_frame_norm', cv2.resize(self.last_frame, (800,600), interpolation=cv2.INTER_CUBIC))
+        # cv2.imshow('last_frame_stream', cv2.resize(self.last_frame_stream, (800,600), interpolation=cv2.INTER_CUBIC))
+        # test_img = cv2.resize(self.normalized_frame_visible, (800,600), interpolation=cv2.INTER_CUBIC)
+        # cv2.putText(test_img,
+        #             'Center temperature {0}, people count:{1}'.format(self.telemetry.get('center_temp')/100.0, Cache.analysis_data.get('people_count')),
+        #             (5,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255),4)
+        # cv2.imshow('last_frame_norm_visible', test_img)
+        # # cv2.imshow('last_frame_color', cv2.resize(self.color_frame, (800,600), interpolation=cv2.INTER_CUBIC))
         # cv2.waitKey(22)& 0xFF
     
     def on_frame_ready(self, callback):

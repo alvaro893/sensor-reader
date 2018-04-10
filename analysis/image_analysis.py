@@ -292,7 +292,7 @@ def hist_equalization(image):
     clahe = clahe.apply(image)
     return clahe
 
-def applyCustomColorMap(im_gray, **kwargs):
+def applyCustomColorMap(src_img, **kwargs):
     """ Applies chosen custom color map to the input image.
 
     Args:
@@ -307,13 +307,13 @@ def applyCustomColorMap(im_gray, **kwargs):
     """
     #Check if color map is explicitly specified, otherwise use inferno as default
     if 'cmap' not in kwargs.keys():
-        kwargs["cmap"] = "inferno"
+        kwargs["cmap"] = Images.inferno_cropped
 
     if 'reverse' not in kwargs.keys():
         kwargs["reverse"] = False
 
     #Load colormap image
-    img = cv2.cvtColor(im_gray, cv2.COLOR_GRAY2BGR);
+    img = cv2.cvtColor(src_img, cv2.COLOR_GRAY2BGR);
 
     #Load image to create a color map from
     lut = Images.get(kwargs["cmap"])
@@ -323,9 +323,11 @@ def applyCustomColorMap(im_gray, **kwargs):
         lut = np.flip(lut, 0)
 
     #Create LUT object and apply to input frame
-    img_color = cv2.LUT(img, lut)
-
-    return img_color
+    if "dst_img" in kwargs.keys():
+        cv2.LUT(img, lut, dst=kwargs['dst_img'])
+    else:
+        img_color = cv2.LUT(img, lut)
+        return img_color
 
 def make_heatmap_grayscale(frame_list): 
     """ Makes average representation of a heatmap for the last period. Applies custom colormap,

@@ -1,4 +1,5 @@
 import cython
+import numpy as np
 from libc.math cimport ceil,round
 
 # use "cd analysis && python setup.py build_ext -b .. && cd .." to compile
@@ -106,8 +107,12 @@ cpdef void rescale_to_8bit(unsigned char [:,:] dst_img, unsigned short [:,:] src
     height = src_img.shape[0]
     img_leng = width*height
 
-    old_min = min
-    old_max = max
+    old_min = np.min(src_img)
+    old_max = np.max(src_img)
+    if min > old_min:
+        old_min = min
+    if max < old_max:
+        old_max = max
     old_range = old_max - old_min
     new_range = 255 # the 8bit range
     for indx in xrange(0,img_leng):
@@ -142,6 +147,18 @@ cpdef normalize_with_absolute_temp(unsigned short [:,:] dst_img, unsigned short 
     for i in range(src_img.shape[0]):
         for j in range(src_img.shape[1]):
             dst_img[i,j] = <unsigned short>round(src_img[i,j] * normp)
+
+
+@cython.boundscheck(False)
+@cython.cdivision(True)
+cpdef stream_image(unsigned short [:,:] dst_img, unsigned short [:,:] src_img):
+    cdef int val
+    for i in range(src_img.shape[0]):
+        for j in range(src_img.shape[1]):
+            val = src_img[i,j] * 16 #  65025/4000 (40 degrees max)
+            if val > 65025:
+                val = 65025
+            dst_img[i,j] = <unsigned short> val
 
 
 #cdef extern from "native_serial.h":

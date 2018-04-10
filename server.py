@@ -172,7 +172,11 @@ def startup(camera, serial_pipe):
 
 
                 old_frame_hash = 0
-                if parsed_path.path == '/cam.mjpg':
+                if parsed_path.path == '/color.mjpg':
+                    img_raw = RequestHandler._camera.last_frame_stream
+                elif parsed_path.path == '/normalized.mjpg':
+                    img_raw = RequestHandler._camera.normalized_frame_visible
+                elif parsed_path.path == '/cam.mjpg':
                     img_raw = RequestHandler._camera.last_frame
                 elif parsed_path.path == '/background.mjpg':
                     img_raw = RequestHandler._camera.bg_subscration_frame
