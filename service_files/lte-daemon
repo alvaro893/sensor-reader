@@ -10,15 +10,9 @@ START="$QMI $DEVICE start"
 # if status is not ok, restart lte module
 while true
 do
-# TW-lte module
-if  $( find "$PORT" > /dev/null ); then
-    if ! eval $STATUS; then
-       eval $STOP
-       eval $START
-    fi
-
-else
+if ! eval $STATUS; then
+   eval $STOP
+   eval $START
 fi
 sleep 20
 done
-
