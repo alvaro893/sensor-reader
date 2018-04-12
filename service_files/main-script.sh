@@ -19,6 +19,9 @@ if [ ! -f "$ENV_FILE" ]; then
     echo "added $ENV_FILE file"
 fi
 
+# Set wireless LAN password and user
+cat "$service_files_path/wpa_supplicant.conf" > /etc/wpa_supplicant/wpa_supplicant.conf
+
 # install packages
 echo -e "\n\n - Installing and Updating packages (if needed)...\n\n" |& tee -a "$logfile"
 apt-get update -y
